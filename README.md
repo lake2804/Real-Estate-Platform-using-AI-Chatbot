@@ -1,6 +1,6 @@
 Here’s a **README.md** template that documents the project based on your repository for the **Real Estate Platform using AI Chatbot**:
 
-````markdown
+
 # Real-Estate-Platform-using-AI-Chatbot
 
 ## 🏡 Project Overview
@@ -95,7 +95,3 @@ We welcome contributions to this project! If you want to contribute, follow thes
 
 Feel free to explore and contribute to this project!
 
-```
-
-This template can be saved as `README.md` in your repository. It provides an overview of the project, how to get started with it, and basic contribution instructions.
-```
