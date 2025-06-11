@@ -106,7 +106,7 @@ export default defineEventHandler(async (event) => {
       }))
     ]
     
-    const limit = parseInt(query.limit as string) || 8
+    const limit = parseInt(query.limit) || 8
     const limitedData = demoFeaturedData.slice(0, limit)
     
     return {

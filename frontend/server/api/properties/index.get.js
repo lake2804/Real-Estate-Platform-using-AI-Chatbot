@@ -90,8 +90,8 @@ export default defineEventHandler(async (event) => {
     }
     
     // Apply pagination
-    const page = parseInt(query.page as string) || 1
-    const limit = parseInt(query.limit as string) || 12
+    const page = parseInt(query.page) || 1
+    const limit = parseInt(query.limit) || 12
     const start = (page - 1) * limit
     const end = start + limit
     
