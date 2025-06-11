@@ -535,7 +535,7 @@ const loadFeaturedProjects = async () => {
     console.log('🔄 Loading projects (using all endpoint)...')
     
     // ✅ Use all projects endpoint since featured is empty
-    const response = await $api('/projects?limit=8')
+    const response = await getFeaturedProjects(8); // Using helper
     console.log('📦 Projects API Response:', response)
     
     if (response?.success && response?.data) {
@@ -560,7 +560,7 @@ const loadRentalProperties = async () => {
     console.log('🔄 Loading rental properties...')
     
     // ✅ Keep existing - this is working
-    const response = await $api('/properties?type=rent&limit=12&featured=true')
+    const response = await getPropertiesForRent(12); // Using helper, assuming it handles featured=true and type=rent
     console.log('📦 Rentals API Response:', response)
     
     if (response?.success && response?.data) {
@@ -585,7 +585,7 @@ const loadSaleProperties = async () => {
     console.log('🔄 Loading sale properties...')
     
     // ✅ Keep existing - this is working
-    const response = await $api('/properties?type=sale&limit=12&featured=true')
+    const response = await getPropertiesForSale(12); // Using helper, assuming it handles featured=true and type=sale
     console.log('📦 Sales API Response:', response)
     
     if (response?.success && response?.data) {
@@ -611,7 +611,7 @@ const loadFeaturedNews = async () => {
     console.log('🔄 Loading news (using all endpoint)...')
     
     // ✅ Use all news endpoint since featured is empty
-    const response = await $api('/news?limit=6')
+    const response = await getFeaturedNews(6); // Using helper
     console.log('📦 News API Response:', response)
     
     if (response?.success && response?.data) {
