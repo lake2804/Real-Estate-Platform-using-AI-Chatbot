@@ -1,8 +1,8 @@
 const express = require('express')
 const router = express.Router()
 
-// ✅ FIXED: Import with .cjs extension
-const User = require('../models/User.cjs')
+// Corrected import to use .js extension
+const User = require('../models/User.js')
 
 // GET /api/users - Get all users (admin only)
 router.get('/', async (req, res) => {

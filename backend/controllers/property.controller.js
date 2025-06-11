@@ -1,4 +1,6 @@
-import Property from '../models/Property.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const Property = require('../models/Property.cjs');
 import mongoose from 'mongoose';
 
 export const getAllProperties = async (req, res) => {
