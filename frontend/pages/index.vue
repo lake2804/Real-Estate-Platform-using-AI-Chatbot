@@ -533,10 +533,9 @@ const loadFeaturedProjects = async () => {
   try {
     isLoadingProjects.value = true;
     console.log('[index.vue] loadFeaturedProjects - Starting load...');
-    const apiUrl = '/projects/featured?limit=8';
-    console.log('[index.vue] loadFeaturedProjects - Fetching URL with $api:', apiUrl);
+    console.log('[index.vue] loadFeaturedProjects - Calling getFeaturedProjects(8)');
     
-    const response = await $api(apiUrl);
+    const response = await getFeaturedProjects(8);
     console.log('[index.vue] loadFeaturedProjects - Raw API Response:', JSON.stringify(response));
     
     if (response?.success && response?.data) {
@@ -568,10 +567,9 @@ const loadRentalProperties = async () => {
   try {
     isLoadingRentals.value = true;
     console.log('[index.vue] loadRentalProperties - Starting load...');
-    const apiUrl = '/properties?type=rent&limit=12&featured=true';
-    console.log('[index.vue] loadRentalProperties - Fetching URL with $api:', apiUrl);
+    console.log('[index.vue] loadRentalProperties - Calling getPropertiesForRent(12)');
     
-    const response = await $api(apiUrl);
+    const response = await getPropertiesForRent(12);
     console.log('[index.vue] loadRentalProperties - Raw API Response:', JSON.stringify(response));
     
     if (response?.success && response?.data) {
@@ -603,10 +601,9 @@ const loadSaleProperties = async () => {
   try {
     isLoadingSales.value = true;
     console.log('[index.vue] loadSaleProperties - Starting load...');
-    const apiUrl = '/properties?type=sale&limit=12&featured=true';
-    console.log('[index.vue] loadSaleProperties - Fetching URL with $api:', apiUrl);
+    console.log('[index.vue] loadSaleProperties - Calling getPropertiesForSale(12)');
     
-    const response = await $api(apiUrl);
+    const response = await getPropertiesForSale(12);
     console.log('[index.vue] loadSaleProperties - Raw API Response:', JSON.stringify(response));
     
     if (response?.success && response?.data) {
@@ -639,10 +636,9 @@ const loadFeaturedNews = async () => {
     newsLoading.value = true;
     newsError.value = null;
     console.log('[index.vue] loadFeaturedNews - Starting load...');
-    const apiUrl = '/news/featured?limit=6';
-    console.log('[index.vue] loadFeaturedNews - Fetching URL with $api:', apiUrl);
+    console.log('[index.vue] loadFeaturedNews - Calling getFeaturedNews(6)');
     
-    const response = await $api(apiUrl);
+    const response = await getFeaturedNews(6);
     console.log('[index.vue] loadFeaturedNews - Raw API Response:', JSON.stringify(response));
     
     if (response?.success && response?.data) {
