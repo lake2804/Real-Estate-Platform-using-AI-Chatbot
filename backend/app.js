@@ -19,7 +19,7 @@ app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/realestate', {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://hom02042005:0NCozkL3Aq4gHyEb@realestatedb.uokc8vu.mongodb.net/?retryWrites=true&w=majority&appName=RealEstateDB', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
@@ -37,16 +37,16 @@ app.get('/api/health', async (req, res) => {
     const Property = require('./models/Property.cjs')
     const News = require('./models/News.cjs')
     const FeaturedProject = require('./models/FeaturedProject.cjs')
-    
+
     const [userCount, propertyCount, newsCount, projectCount] = await Promise.all([
       User.countDocuments(),
-      Property.countDocuments(), 
+      Property.countDocuments(),
       News.countDocuments(),
       FeaturedProject.countDocuments()
     ])
-    
-    res.json({ 
-      status: 'OK', 
+
+    res.json({
+      status: 'OK',
       timestamp: new Date().toISOString(),
       mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
       counts: {

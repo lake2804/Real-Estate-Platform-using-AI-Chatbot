@@ -10,7 +10,7 @@
       <div><span class="text-yellow-400">Messages:</span> {{ activeMessageCount }}</div>
       <div><span class="text-yellow-400">Auth:</span> {{ authStore.currentUser ? '✅' : '❌' }}</div>
       <div><span class="text-yellow-400">Connected:</span> {{ chatStore.isConnected ? '✅' : '❌' }}</div>
-      
+
       <!-- Debug conversation data -->
       <div v-if="chatStore.activeConversation" class="p-2 mt-2 text-xs bg-gray-800 rounded">
         <div class="font-bold text-green-400">Active Conversation:</div>
@@ -18,24 +18,24 @@
         <div>In Store: {{ activeConversationInStore ? '✅' : '❌' }}</div>
         <div>Has Messages: {{ hasActiveMessages ? '✅' : '❌' }}</div>
       </div>
-      
+
       <!-- Debug buttons -->
       <div class="mt-2 space-y-1">
-        <button 
+        <button
           @click="addTestMessage"
           class="w-full px-2 py-1 text-xs text-white bg-blue-600 rounded hover:bg-blue-700"
         >
           Add Test Message
         </button>
-        
-        <button 
+
+        <button
           @click="forceRefreshConversations"
           class="w-full px-2 py-1 text-xs text-white bg-green-600 rounded hover:bg-green-700"
         >
           Force Refresh
         </button>
-        
-        <button 
+
+        <button
           @click="clearLocalData"
           class="w-full px-2 py-1 text-xs text-white bg-red-600 rounded hover:bg-red-700"
         >
@@ -71,7 +71,7 @@ const activeConversationType = computed(() => {
 })
 
 const activeMessageCount = computed(() => {
-  return chatStore.activeConversation ? 
+  return chatStore.activeConversation ?
     (chatStore.messages[chatStore.activeConversation]?.length || 0) : 0
 })
 
@@ -80,7 +80,7 @@ const activeConversationInStore = computed(() => {
 })
 
 const hasActiveMessages = computed(() => {
-  return chatStore.activeConversation && 
+  return chatStore.activeConversation &&
          chatStore.messages[chatStore.activeConversation] &&
          chatStore.messages[chatStore.activeConversation].length > 0
 })
@@ -90,42 +90,37 @@ const addTestMessage = async () => {
     alert('No active conversation')
     return
   }
-  
+
   try {
     await chatStore.sendMessage(
-      chatStore.activeConversation, 
+      chatStore.activeConversation,
       `Test message at ${new Date().toLocaleTimeString()}`
     )
   } catch (error) {
-    console.log('Test message error:', error)
   }
 }
 
 const forceRefreshConversations = () => {
-  console.log('🔧 Force refreshing conversations...')
-  console.log('Current conversations:', chatStore.conversations)
-  console.log('Current messages:', chatStore.messages)
-  console.log('Active conversation:', chatStore.activeConversation)
+
 }
 
 const clearLocalData = () => {
   if (confirm('Clear all local conversations and messages?')) {
     // Remove local conversations
     chatStore.conversations = chatStore.conversations.filter(c => !c._id?.startsWith('local_'))
-    
+
     // Clear local messages
     Object.keys(chatStore.messages).forEach(key => {
       if (key.startsWith('local_')) {
         delete chatStore.messages[key]
       }
     })
-    
+
     // Clear active if it was local
     if (chatStore.activeConversation?.startsWith('local_')) {
       chatStore.activeConversation = null
     }
-    
-    console.log('✅ Local data cleared')
+
   }
 }
 </script>

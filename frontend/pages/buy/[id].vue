@@ -32,8 +32,8 @@
         <h1 class="mb-4 text-2xl font-bold text-gray-900">Không tìm thấy bất động sản</h1>
         <p class="mb-8 text-gray-600">Bất động sản bạn đang tìm không tồn tại hoặc đã bị gỡ bỏ.</p>
         <p v-if="isDev" class="mb-4 text-sm text-red-600">Error: {{ error }}</p>
-        <NuxtLink 
-          to="/buy" 
+        <NuxtLink
+          to="/buy"
           class="px-6 py-3 bg-[#F62E56] text-white rounded-lg hover:bg-[#F62E56]/90 transition"
         >
           ← Quay lại danh sách
@@ -52,24 +52,24 @@
             <div class="relative overflow-hidden rounded-xl h-96">
               <img
                 :src="activeImage || '/api/placeholder/800/600'"
-                :alt="property.title"
+                :alt="property?.title"
                 class="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
                 @error="handleImageError"
               />
-              
+
               <!-- Image Counter -->
-              <div v-if="property.images?.length > 1" class="absolute px-3 py-1 text-sm text-white rounded-full top-4 right-4 bg-black/50">
-                {{ currentImageIndex + 1 }} / {{ property.images.length }}
+              <div v-if="property?.images?.length > 1" class="absolute px-3 py-1 text-sm text-white rounded-full top-4 right-4 bg-black/50">
+                {{ currentImageIndex + 1 }} / {{ property?.images.length }}
               </div>
             </div>
 
             <!-- Image Thumbnails -->
-            <div v-if="property.images?.length > 1" class="flex gap-2 overflow-x-auto">
+            <div v-if="property?.images?.length > 1" class="flex gap-2 overflow-x-auto">
               <img
-                v-for="(image, index) in property.images"
+                v-for="(image, index) in property?.images"
                 :key="index"
                 :src="image || '/api/placeholder/150/100'"
-                :alt="`${property.title} - Ảnh ${index + 1}`"
+                :alt="`${property?.title} - Ảnh ${index + 1}`"
                 class="flex-shrink-0 object-cover w-20 h-16 transition-all border-2 rounded-lg cursor-pointer"
                 :class="activeImage === image ? 'border-[#F62E56]' : 'border-gray-200 hover:border-gray-400'"
                 @click="setActiveImage(image, index)"
@@ -82,9 +82,9 @@
           <div class="space-y-6">
             <!-- Title and Price -->
             <div>
-              <h1 class="mb-2 text-3xl font-bold text-gray-900">{{ property.title }}</h1>
+              <h1 class="mb-2 text-3xl font-bold text-gray-900">{{ property?.title }}</h1>
               <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-bold text-[#F62E56]">{{ formatPrice(property.price) }}</span>
+                <span class="text-3xl font-bold text-[#F62E56]">{{ property?.price }}</span>
                 <span class="text-gray-500">VND</span>
               </div>
             </div>
@@ -94,25 +94,25 @@
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
               </svg>
-              <span>{{ formatLocation(property.location) }}</span>
+              <span>{{ formatLocation(property?.location) }}</span>
             </div>
 
             <!-- Property Details Grid -->
             <div class="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl">
               <div class="text-center">
-                <div class="text-2xl font-bold text-gray-900">{{ property.area || 0 }}</div>
+                <div class="text-2xl font-bold text-gray-900">{{ property?.area || 0 }}</div>
                 <div class="text-sm text-gray-500">m² diện tích</div>
               </div>
               <div class="text-center">
-                <div class="text-2xl font-bold text-gray-900">{{ property.bedrooms || 0 }}</div>
+                <div class="text-2xl font-bold text-gray-900">{{ property?.bedrooms || 0 }}</div>
                 <div class="text-sm text-gray-500">phòng ngủ</div>
               </div>
               <div class="text-center">
-                <div class="text-2xl font-bold text-gray-900">{{ property.bathrooms || 0 }}</div>
+                <div class="text-2xl font-bold text-gray-900">{{ property?.bathrooms || 0 }}</div>
                 <div class="text-sm text-gray-500">phòng tắm</div>
               </div>
               <div class="text-center">
-                <div class="text-2xl font-bold text-gray-900">{{ property.direction || 'N/A' }}</div>
+                <div class="text-2xl font-bold text-gray-900">{{ property?.direction || 'N/A' }}</div>
                 <div class="text-sm text-gray-500">hướng</div>
               </div>
             </div>
@@ -130,7 +130,7 @@
                 <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                 </svg>
-                
+
                 <span v-if="isSelfOwned">
                   Đây là BĐS của bạn
                 </span>
@@ -158,21 +158,21 @@
             </div>
 
             <!-- Owner Info -->
-            <div v-if="property.owner && !isSelfOwned" class="p-4 border rounded-lg bg-gray-50">
+            <div v-if="property?.owner && !isSelfOwned" class="p-4 border rounded-lg bg-gray-50">
               <h3 class="mb-3 font-semibold text-gray-900">Thông tin chủ sở hữu</h3>
               <div class="flex items-center gap-3">
-                <img 
-                  :src="property.owner.avatar || '/api/placeholder/60/60'" 
-                  :alt="property.owner.fullName"
+                <img
+                  :src="property?.owner.avatar || '/api/placeholder/60/60'"
+                  :alt="property?.owner.fullName"
                   class="object-cover w-12 h-12 rounded-full"
                 />
                 <div class="flex-1">
-                  <div class="font-semibold text-gray-900">{{ property.owner.fullName }}</div>
+                  <div class="font-semibold text-gray-900">{{ property?.owner.fullName }}</div>
                   <div class="flex items-center gap-1 text-sm text-gray-500">
                     <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 17.27L18.18 21 16.54 13.97 22 9.24l-9.19-.77L12 2 10.18 8.47 1 9.24l7.46 4.73L5.82 21z"/>
                     </svg>
-                    <span>{{ property.owner.rating || '5.0' }} ({{ property.owner.reviews || '12' }} đánh giá)</span>
+                    <span>{{ property?.owner.rating || '5.0' }} ({{ property?.owner.reviews || '12' }} đánh giá)</span>
                   </div>
                 </div>
               </div>
@@ -187,19 +187,19 @@
         <section class="p-6 bg-white shadow-lg rounded-xl">
           <h2 class="mb-4 text-xl font-bold">Mô tả chi tiết</h2>
           <div class="leading-relaxed text-gray-700 whitespace-pre-line">
-            {{ property.description }}
+            {{ property?.description }}
           </div>
         </section>
 
         <!-- Amenities -->
-        <section v-if="property.amenities?.length || property.interior?.length" class="p-6 bg-white shadow-lg rounded-xl">
+        <section v-if="property?.amenities?.length || property?.interior?.length" class="p-6 bg-white shadow-lg rounded-xl">
           <h2 class="mb-4 text-xl font-bold">Tiện nghi</h2>
-          
+
           <!-- Interior Features -->
-          <div v-if="property.interior?.length" class="mb-6">
+          <div v-if="property?.interior?.length" class="mb-6">
             <h3 class="mb-3 font-semibold">Tiện nghi nội thất</h3>
             <div class="flex flex-wrap gap-3">
-              <div v-for="item in property.interior" :key="item" class="flex items-center gap-1 px-3 py-1 text-sm bg-gray-100 rounded-full">
+              <div v-for="item in property?.interior" :key="item" class="flex items-center gap-1 px-3 py-1 text-sm bg-gray-100 rounded-full">
                 <span v-if="getIconForAmenity(item)" v-html="getIconForAmenity(item)" class="w-4 h-4"></span>
                 <span>{{ item }}</span>
               </div>
@@ -207,10 +207,10 @@
           </div>
 
           <!-- General Amenities -->
-          <div v-if="property.amenities?.length" class="mb-6">
+          <div v-if="property?.amenities?.length" class="mb-6">
             <h3 class="mb-3 font-semibold">Tiện ích chung</h3>
             <div class="flex flex-wrap gap-3">
-              <div v-for="item in property.amenities" :key="item" class="flex items-center gap-1 px-3 py-1 text-sm bg-blue-100 rounded-full">
+              <div v-for="item in property?.amenities" :key="item" class="flex items-center gap-1 px-3 py-1 text-sm bg-blue-100 rounded-full">
                 <span v-if="getIconForAmenity(item)" v-html="getIconForAmenity(item)" class="w-4 h-4"></span>
                 <span>{{ item }}</span>
               </div>
@@ -219,10 +219,10 @@
         </section>
 
         <!-- Advantages -->
-        <section v-if="property.advantages" class="p-6 bg-white shadow-lg rounded-xl">
+        <section v-if="property?.advantages" class="p-6 bg-white shadow-lg rounded-xl">
           <h2 class="mb-4 text-xl font-bold">Ưu điểm dự án</h2>
           <div class="text-gray-700">
-            {{ property.advantages }}
+            {{ property?.advantages }}
           </div>
         </section>
       </div>
@@ -252,7 +252,7 @@ definePageMeta({
 
 // Data fetching
 const { getPropertyById } = useApi()
-const { data: propertyData, pending, error, refresh } = await useLazyFetch(`property-${route.params.id}`, () => 
+const { data: propertyData, pending, error, refresh } = await useLazyFetch(`property-${route.params.id}`, () =>
   getPropertyById(route.params.id)
 )
 
@@ -276,7 +276,7 @@ const isScheduleLoading = ref(false)
 const isDev = computed(() => process.env.NODE_ENV === 'development')
 
 const isSelfOwned = computed(() => {
-  return authStore.currentUser?._id === property.value?.owner?._id
+  return authStore.currentUser?._id === property?.value?.owner?._id
 })
 
 // Methods
@@ -329,28 +329,28 @@ const getIconForAmenity = (amenity) => {
 
 const handleContactClick = async () => {
   if (isSelfOwned.value) return
-  
+
   isContactLoading.value = true
-  
+
   try {
-    console.log('🔧 Contact button clicked for property:', property.value?.title)
-    
+    console.log('🔧 Contact button clicked for property:', property?.value?.title)
+
     // Navigate to contact page with property info
-    const navigationUrl = `/contact?from=${encodeURIComponent(route.path)}&title=${encodeURIComponent(property.value.title)}&propertyId=${property.value._id}`
-    
+    const navigationUrl = `/contact?from=${encodeURIComponent(route.path)}&title=${encodeURIComponent(property?.value.title)}&propertyId=${property?.value._id}`
+
     await navigateTo(navigationUrl)
-    
+
   } catch (error) {
     console.error('❌ Error in handleContactClick:', error)
-    
+
     // Fallback navigation
     try {
-      await navigateTo(`/contact?from=${encodeURIComponent(route.path)}&title=${encodeURIComponent(property.value.title || 'Bất động sản')}`)
+      await navigateTo(`/contact?from=${encodeURIComponent(route.path)}&title=${encodeURIComponent(property?.value.title || 'Bất động sản')}`)
     } catch (navError) {
       console.error('❌ Even fallback navigation failed:', navError)
       alert('Không thể chuyển đến trang liên hệ. Vui lòng thử lại!')
     }
-    
+
   } finally {
     setTimeout(() => {
       isContactLoading.value = false
@@ -360,15 +360,15 @@ const handleContactClick = async () => {
 
 const handleScheduleViewing = async () => {
   if (isSelfOwned.value) return
-  
+
   isScheduleLoading.value = true
-  
+
   try {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
+
     alert('Đã gửi yêu cầu hẹn xem nhà! Chúng tôi sẽ liên hệ với bạn sớm nhất.')
-    
+
   } catch (error) {
     console.error('Error scheduling viewing:', error)
     alert('Có lỗi xảy ra. Vui lòng thử lại sau.')
@@ -379,8 +379,8 @@ const handleScheduleViewing = async () => {
 
 // Initialize active image
 watch(property, (newProperty) => {
-  if (newProperty?.images?.length) {
-    activeImage.value = newProperty.images[0]
+  if (newproperty?.images?.length) {
+    activeImage.value = newproperty?.images[0]
     currentImageIndex.value = 0
   }
 }, { immediate: true })
@@ -389,9 +389,9 @@ watch(property, (newProperty) => {
 watch(property, (newProperty) => {
   if (newProperty) {
     useHead({
-      title: `${newProperty.title} - Bán nhà`,
+      title: `${newproperty?.title} - Bán nhà`,
       meta: [
-        { name: 'description', content: newProperty.description || 'Chi tiết bất động sản' }
+        { name: 'description', content: newproperty?.description || 'Chi tiết bất động sản' }
       ]
     })
   }
@@ -399,7 +399,7 @@ watch(property, (newProperty) => {
 
 onMounted(() => {
   console.log('🔧 Buy detail page mounted')
-  console.log('🔍 Property data:', property.value)
+  console.log('🔍 Property data:', property?.value)
   console.log('🔍 Auth user:', authStore.currentUser)
 })
 </script>

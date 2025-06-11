@@ -113,7 +113,7 @@
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label class="block mb-2 text-sm font-medium text-gray-700">Địa chỉ</label>
                   <textarea
@@ -146,30 +146,30 @@
             <!-- Favorites Tab -->
             <div v-else-if="currentTab === 'favorites'" class="p-6">
               <h2 class="mb-6 text-xl font-semibold text-gray-900">Danh sách yêu thích</h2>
-              
+
               <div v-if="favoriteProperties.length" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <div
                   v-for="property in favoriteProperties"
-                  :key="property.id"
+                  :key="property?.id"
                   class="relative transition bg-white border rounded-lg shadow-sm hover:shadow-md"
                 >
                   <button
-                    @click="removeFavorite(property.id)"
+                    @click="removeFavorite(property?.id)"
                     class="absolute z-10 flex items-center justify-center w-8 h-8 text-white transition bg-red-500 rounded-full top-2 right-2 hover:bg-red-600"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
-                  
+
                   <PropertyCard
                     :product="property"
-                    :to="`/${property.type === 'rent' ? 'rent' : 'buy'}/${property.id}`"
-                    :isRent="property.type === 'rent'"
+                    :to="`/${property?.type === 'rent' ? 'rent' : 'buy'}/${property?.id}`"
+                    :isRent="property?.type === 'rent'"
                   />
                 </div>
               </div>
-              
+
               <div v-else class="py-12 text-center">
                 <svg class="w-24 h-24 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -242,7 +242,7 @@
                   </div>
                 </div>
               </div>
-              
+
               <div v-else class="py-12 text-center">
                 <svg class="w-24 h-24 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m5 0v-4a1 1 0 011-1h2a1 1 0 011 1v4M7 7h10M7 11h4" />
@@ -263,7 +263,7 @@
               <!-- Admin Dashboard -->
               <div v-if="currentTab === 'admin-dashboard'" class="p-6">
                 <h2 class="mb-6 text-xl font-semibold text-gray-900">Bảng điều khiển Admin</h2>
-                
+
                 <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
                   <div class="p-6 text-white rounded-lg bg-gradient-to-r from-blue-500 to-blue-600">
                     <div class="flex items-center justify-between">
@@ -346,7 +346,7 @@
               <!-- User Management -->
               <div v-if="currentTab === 'users'" class="p-6">
                 <h2 class="mb-6 text-xl font-semibold text-gray-900">Quản lý người dùng</h2>
-                
+
                 <div class="mb-4">
                   <input
                     v-model="userSearchQuery"
@@ -396,8 +396,8 @@
                             @click="toggleUserStatus(user.id)"
                             :class="[
                               'px-3 py-1 rounded text-xs',
-                              user.status === 'active' 
-                                ? 'bg-red-100 text-red-800 hover:bg-red-200' 
+                              user.status === 'active'
+                                ? 'bg-red-100 text-red-800 hover:bg-red-200'
                                 : 'bg-green-100 text-green-800 hover:bg-green-200'
                             ]"
                           >
@@ -414,7 +414,7 @@
             <!-- Settings Tab -->
             <div v-else-if="currentTab === 'settings'" class="p-6">
               <h2 class="mb-6 text-xl font-semibold text-gray-900">Cài đặt</h2>
-              
+
               <div class="space-y-6">
                 <!-- Notification Settings -->
                 <div class="pb-6 border-b">
@@ -440,7 +440,7 @@
                         ></span>
                       </button>
                     </div>
-                    
+
                     <div class="flex items-center justify-between">
                       <div>
                         <label class="text-sm font-medium text-gray-700">SMS thông báo</label>
@@ -722,37 +722,37 @@ const recentActivities = ref([
 // Computed
 const availableTabs = computed(() => {
   const baseTabs = [
-    { 
-      key: 'info', 
+    {
+      key: 'info',
       label: 'Thông tin tài khoản',
       icon: 'svg'  // You can replace with actual icon components
     },
-    { 
-      key: 'favorites', 
+    {
+      key: 'favorites',
       label: 'Danh sách yêu thích',
       icon: 'svg'
     },
-    { 
-      key: 'listings', 
+    {
+      key: 'listings',
       label: 'Tin đăng của tôi',
       icon: 'svg'
     },
-    { 
-      key: 'settings', 
+    {
+      key: 'settings',
       label: 'Cài đặt',
       icon: 'svg'
     }
   ]
 
   if (currentUser.value?.role === 'admin') {
-    baseTabs.splice(3, 0, 
-      { 
-        key: 'admin-dashboard', 
+    baseTabs.splice(3, 0,
+      {
+        key: 'admin-dashboard',
         label: 'Dashboard Admin',
         icon: 'svg'
       },
-      { 
-        key: 'users', 
+      {
+        key: 'users',
         label: 'Quản lý người dùng',
         icon: 'svg'
       }
@@ -764,8 +764,8 @@ const availableTabs = computed(() => {
 
 const filteredUsers = computed(() => {
   if (!userSearchQuery.value) return allUsers.value
-  
-  return allUsers.value.filter(user => 
+
+  return allUsers.value.filter(user =>
     user.name.toLowerCase().includes(userSearchQuery.value.toLowerCase()) ||
     user.email.toLowerCase().includes(userSearchQuery.value.toLowerCase())
   )
@@ -787,16 +787,16 @@ const initializeProfileForm = () => {
 const updateProfile = async () => {
   try {
     isUpdating.value = true
-    
+
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
+
     // Update user in store
     authStore.user = {
       ...authStore.user,
       ...profileForm.value
     }
-    
+
     editMode.value = false
     alert('Cập nhật thông tin thành công!')
   } catch (error) {
@@ -814,10 +814,10 @@ const changePassword = async () => {
 
   try {
     isChangingPassword.value = true
-    
+
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
+
     passwordForm.value = { current: '', new: '', confirm: '' }
     alert('Đổi mật khẩu thành công!')
   } catch (error) {

@@ -2,22 +2,22 @@
   <div class="overflow-hidden transition-shadow duration-300 bg-white rounded-lg shadow-sm hover:shadow-md">
     <!-- Property Image -->
     <div class="relative h-48 cursor-pointer" @click="goToProperty">
-      <img 
-        :src="property.image || 'https://picsum.photos/600/400'" 
-        :alt="property.title || property.name"
+      <img
+        :src="property?.image || 'https://picsum.photos/600/400'"
+        :alt="property?.title || property?.name"
         class="object-cover w-full h-full"
         @error="handleImageError"
       />
-      
+
       <!-- Type Badge -->
       <div class="absolute top-3 left-3">
         <span class="px-2 py-1 text-xs font-medium text-white bg-red-500 rounded">
           {{ isRent ? 'Cho thuê' : 'Bán' }}
         </span>
       </div>
-      
+
       <!-- Featured Badge -->
-      <div v-if="property.featured" class="absolute top-3 right-3">
+      <div v-if="property?.featured" class="absolute top-3 right-3">
         <span class="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded">
           Nổi bật
         </span>
@@ -28,44 +28,44 @@
     <div class="p-4">
       <!-- Property Title -->
       <h3 class="mb-2 text-lg font-semibold text-gray-900 cursor-pointer line-clamp-2" @click="goToProperty">
-        {{ property.title || property.name }}
+        {{ property?.title || property?.name }}
       </h3>
-      
+
       <!-- Location -->
       <div class="flex items-center mb-3 text-gray-600">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
-        <span class="text-sm">{{ property.location || 'Chưa cập nhật' }}</span>
+        <span class="text-sm">{{ property?.location || 'Chưa cập nhật' }}</span>
       </div>
-      
+
       <!-- Price -->
       <div class="mb-3">
         <div class="text-xl font-bold text-red-500">
-          {{ formatPrice(property.price) }}
+          {{ property?.price }}
           <span v-if="isRent" class="text-sm font-normal text-gray-600">/tháng</span>
         </div>
       </div>
-      
+
       <!-- Property Details -->
       <div class="flex justify-between mb-4 text-center">
         <div class="flex-1">
-          <div class="text-sm font-semibold text-gray-900">{{ property.bedrooms || 0 }}</div>
+          <div class="text-sm font-semibold text-gray-900">{{ property?.bedrooms || 0 }}</div>
           <div class="text-xs text-gray-600">Phòng ngủ</div>
         </div>
         <div class="flex-1">
-          <div class="text-sm font-semibold text-gray-900">{{ property.bathrooms || 0 }}</div>
+          <div class="text-sm font-semibold text-gray-900">{{ property?.bathrooms || 0 }}</div>
           <div class="text-xs text-gray-600">Phòng tắm</div>
         </div>
         <div class="flex-1">
-          <div class="text-sm font-semibold text-gray-900">{{ property.area || 0 }}</div>
+          <div class="text-sm font-semibold text-gray-900">{{ property?.area || 0 }}</div>
           <div class="text-xs text-gray-600">m²</div>
         </div>
       </div>
-      
+
       <!-- Action Button -->
-      <button 
+      <button
         @click="goToProperty"
         class="w-full px-4 py-2 text-white transition-colors duration-200 bg-red-500 rounded hover:bg-red-600"
       >
@@ -80,6 +80,10 @@ import { ref, computed, onMounted } from 'vue'
 import PropertyCard from '~/components/PropertyCard.vue'
 import UniversalSearchBar from '~/components/UniversalSearchBar.vue'
 import FeaturedProjectCard from '~/components/FeaturedProjectCard.vue'
+
+const props = defineProps({
+  property: Object
+})
 
 // Meta
 definePageMeta({
@@ -119,7 +123,7 @@ const activeNewsTab = ref(0)
 const vietnamCities = [
   'Tất cả',
   'TP.HCM',
-  'Hà Nội', 
+  'Hà Nội',
   'Đà Nẵng',
   'Hải Phòng',
   'Cần Thơ',
@@ -168,32 +172,31 @@ const transformProperty = (property) => {
   }
 
   return {
-    id: String(property._id || property.id),
-    _id: String(property._id || property.id),
-    title: property.title || property.name || 'Bất động sản',
-    name: property.title || property.name || 'Bất động sản',
-    image: property.images?.[0] || property.image || 'https://picsum.photos/600/400',
-    images: property.images || [],
-    price: Number(property.price || 0),
-    location: property.location?.district ? 
-      `${property.location.district}, ${property.location.city}` : 
-      (property.location?.address || property.location?.city || property.location || 'Chưa cập nhật'),
-    type: property.type || 'sale',
-    bedrooms: Number(property.details?.bedrooms || property.bedrooms || 0),
-    bathrooms: Number(property.details?.bathrooms || property.bathrooms || 0),
-    area: Number(property.details?.area || property.area || 0),
-    featured: Boolean(property.isFeatured || property.featured),
-    status: property.status || 'active',
-    description: property.description || '',
-    views: Number(property.views || 0),
-    createdAt: property.createdAt,
-    publishedAt: property.publishedAt
+    id: String(property?._id || property?.id),
+    _id: String(property?._id || property?.id),
+    title: property?.title || property?.name || 'Bất động sản',
+    name: property?.title || property?.name || 'Bất động sản',
+    image: property?.images?.[0] || property?.image || 'https://picsum.photos/600/400',
+    images: property?.images || [],
+    price: Number(property?.price || 0),
+    location: property?.location?.district ?
+      `${property?.location.district}, ${property?.location.city}` :
+      (property?.location?.address || property?.location?.city || property?.location || 'Chưa cập nhật'),
+    type: property?.type || 'sale',
+    bedrooms: Number(property?.details?.bedrooms || property?.bedrooms || 0),
+    bathrooms: Number(property?.details?.bathrooms || property?.bathrooms || 0),
+    area: Number(property?.details?.area || property?.area || 0),
+    featured: Boolean(property?.isFeatured || property?.featured),
+    status: property?.status || 'active',
+    description: property?.description || '',
+    views: Number(property?.views || 0),
+    createdAt: property?.createdAt,
+    publishedAt: property?.publishedAt
   }
 }
 
 const transformProject = (project) => {
   if (!project?._id && !project?.id) {
-    console.warn('⚠️ Project missing ID:', project)
     return null
   }
 
@@ -206,8 +209,8 @@ const transformProject = (project) => {
     images: project.images || [],
     priceFrom: Number(project.pricing?.priceFrom || project.priceFrom || 0),
     priceTo: Number(project.pricing?.priceTo || project.priceTo || 0),
-    location: project.location?.district ? 
-      `${project.location.district}, ${project.location.city}` : 
+    location: project.location?.district ?
+      `${project.location.district}, ${project.location.city}` :
       (project.location?.city || project.location?.address || project.location || 'Chưa cập nhật'),
     developer: project.developer?.name || project.developer || 'Chưa cập nhật',
     status: project.status || 'active',
@@ -226,7 +229,7 @@ const transformNews = (article) => {
     console.warn('⚠️ News article missing ID:', article)
     return null
   }
-  
+
   return {
     id: String(article._id || article.id),
     _id: String(article._id || article.id),
@@ -251,27 +254,23 @@ const transformNews = (article) => {
 const loadFeaturedProjects = async () => {
   try {
     isLoadingProjects.value = true
-    console.log('🔄 Loading featured projects...')
-    
+
     // ✅ FIXED: Use correct API method
     const response = await getFeaturedProjects(8)
-    console.log('📦 Projects API Response:', response)
-    
+
     if (response?.success && response?.data) {
       const transformedProjects = response.data
         .map(transformProject)
         .filter(Boolean)
-      
+
       projects.value = transformedProjects
-      console.log(`✅ Loaded ${projects.value.length} featured projects`)
     } else if (response?.data && Array.isArray(response.data)) {
       // Handle direct array response
       const transformedProjects = response.data
         .map(transformProject)
         .filter(Boolean)
-      
+
       projects.value = transformedProjects
-      console.log(`✅ Loaded ${projects.value.length} projects from direct array`)
     } else {
       console.warn('⚠️ No projects data received:', response)
       projects.value = []
@@ -287,27 +286,23 @@ const loadFeaturedProjects = async () => {
 const loadRentalProperties = async () => {
   try {
     isLoadingRentals.value = true
-    console.log('🔄 Loading rental properties...')
-    
+
     // ✅ FIXED: Use correct API method
     const response = await getPropertiesForRent(12, { featured: 'true' })
-    console.log('📦 Rentals API Response:', response)
-    
+
     if (response?.success && response?.data) {
       const transformedRentals = response.data
         .map(transformProperty)
         .filter(Boolean)
-      
+
       rentalProperties.value = transformedRentals
-      console.log(`✅ Loaded ${rentalProperties.value.length} rental properties`)
     } else if (response?.data && Array.isArray(response.data)) {
       // Handle direct array response
       const transformedRentals = response.data
         .map(transformProperty)
         .filter(Boolean)
-      
+
       rentalProperties.value = transformedRentals
-      console.log(`✅ Loaded ${rentalProperties.value.length} rentals from direct array`)
     } else {
       console.warn('⚠️ No rental properties data received:', response)
       rentalProperties.value = []
@@ -323,27 +318,23 @@ const loadRentalProperties = async () => {
 const loadSaleProperties = async () => {
   try {
     isLoadingSales.value = true
-    console.log('🔄 Loading sale properties...')
-    
+
     // ✅ FIXED: Use correct API method
     const response = await getPropertiesForSale(12, { featured: 'true' })
-    console.log('📦 Sales API Response:', response)
-    
+
     if (response?.success && response?.data) {
       const transformedSales = response.data
         .map(transformProperty)
         .filter(Boolean)
-      
+
       saleProperties.value = transformedSales
-      console.log(`✅ Loaded ${saleProperties.value.length} sale properties`)
     } else if (response?.data && Array.isArray(response.data)) {
       // Handle direct array response
       const transformedSales = response.data
         .map(transformProperty)
         .filter(Boolean)
-      
+
       saleProperties.value = transformedSales
-      console.log(`✅ Loaded ${saleProperties.value.length} sales from direct array`)
     } else {
       console.warn('⚠️ No sale properties data received:', response)
       saleProperties.value = []
@@ -360,27 +351,23 @@ const loadFeaturedNews = async () => {
   try {
     newsLoading.value = true
     newsError.value = null
-    console.log('🔄 Loading featured news...')
-    
+
     // ✅ FIXED: Use correct API method
     const response = await getFeaturedNews(6)
-    console.log('📦 News API Response:', response)
-    
+
     if (response?.success && response?.data) {
       const transformedNews = response.data
         .map(transformNews)
         .filter(Boolean)
-      
+
       news.value = transformedNews
-      console.log(`✅ Loaded ${news.value.length} featured news articles`)
     } else if (response?.data && Array.isArray(response.data)) {
       // Handle direct array response
       const transformedNews = response.data
         .map(transformNews)
         .filter(Boolean)
-      
+
       news.value = transformedNews
-      console.log(`✅ Loaded ${news.value.length} news from direct array`)
     } else {
       console.warn('⚠️ No news data received:', response)
       news.value = []
@@ -397,13 +384,13 @@ const loadFeaturedNews = async () => {
 // ✅ ENHANCED FILTER FUNCTION
 const filterByCity = (items, tabIndex) => {
   if (tabIndex === 0 || !items.length) return items // Tất cả
-  
+
   const cityVariants = cityMapping[tabIndex]
   if (!cityVariants) return items
-  
+
   return items.filter(item => {
     const location = (item.location || '').toLowerCase()
-    return cityVariants.some(variant => 
+    return cityVariants.some(variant =>
       location.includes(variant.toLowerCase())
     )
   })
@@ -411,8 +398,7 @@ const filterByCity = (items, tabIndex) => {
 
 // ✅ LOAD ALL DATA
 const loadHomeData = async () => {
-  console.log('🚀 Loading homepage data...')
-  
+
   // Load all data in parallel
   await Promise.all([
     loadFeaturedProjects(),
@@ -420,32 +406,23 @@ const loadHomeData = async () => {
     loadSaleProperties(),
     loadFeaturedNews()
   ])
-  
-  console.log('✅ Homepage data loaded!')
-  console.log('📊 Final counts:', {
-    projects: projects.value.length,
-    rentals: rentalProperties.value.length,
-    sales: saleProperties.value.length,
-    news: news.value.length
-  })
+
+
 }
 
 // ✅ FILTERED DATA COMPUTED
 const filteredProjects = computed(() => {
   const filtered = filterByCity(projects.value, activeProjectTab.value)
-  console.log(`🔍 Filtered projects: ${filtered.length}/${projects.value.length} for tab ${activeProjectTab.value}`)
   return filtered
 })
 
 const filteredRentals = computed(() => {
   const filtered = filterByCity(rentalProperties.value, activeRentalTab.value)
-  console.log(`🔍 Filtered rentals: ${filtered.length}/${rentalProperties.value.length} for tab ${activeRentalTab.value}`)
   return filtered
 })
 
 const filteredSales = computed(() => {
   const filtered = filterByCity(saleProperties.value, activeSaleTab.value)
-  console.log(`🔍 Filtered sales: ${filtered.length}/${saleProperties.value.length} for tab ${activeSaleTab.value}`)
   return filtered
 })
 
@@ -463,15 +440,14 @@ const totalStats = computed(() => ({
 
 // ✅ SEARCH HANDLER
 const onSearch = (searchData) => {
-  console.log('🔍 Search triggered:', searchData)
-  
+
   const queryParams = new URLSearchParams()
   if (searchData.keyword) queryParams.set('keyword', searchData.keyword)
   if (searchData.location) queryParams.set('location', searchData.location)
   if (searchData.priceRange) queryParams.set('priceRange', searchData.priceRange)
-  
+
   const queryString = queryParams.toString()
-  
+
   if (searchData.type === 'rent') {
     navigateTo(`/rent${queryString ? '?' + queryString : ''}`)
   } else {
@@ -502,7 +478,7 @@ const formatDate = (dateString) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('vi-VN', {
       day: '2-digit',
-      month: '2-digit', 
+      month: '2-digit',
       year: 'numeric'
     })
   } catch (error) {

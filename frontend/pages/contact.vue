@@ -73,7 +73,7 @@
               class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#F62E56] focus:border-transparent bg-white text-sm"
             />
           </div>
-          
+
           <!-- Conversation Stats -->
           <div class="flex items-center justify-between mt-3 text-xs text-gray-500">
             <span>{{ (filteredConversations || []).length }} cuộc trò chuyện</span>
@@ -110,11 +110,11 @@
           </div>
           <h3 class="mb-2 text-lg font-medium text-gray-900">Chưa có cuộc trò chuyện</h3>
           <p class="mb-4 text-sm text-gray-500">Bắt đầu trò chuyện từ các tin đăng bất động sản</p>
-          
+
           <!-- Quick Action Buttons in Empty State -->
           <div class="flex flex-col space-y-2">
-            <NuxtLink 
-              to="/" 
+            <NuxtLink
+              to="/"
               class="inline-flex items-center px-4 py-2 bg-[#F62E56] text-white rounded-lg hover:bg-[#F62E56]/90 transition-colors text-sm font-medium"
             >
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,7 +122,7 @@
               </svg>
               Tìm bất động sản
             </NuxtLink>
-            
+
             <button
               v-if="previousPropertyUrl"
               @click="goBackToProperty"
@@ -178,7 +178,7 @@
                     {{ formatTime(conversation.lastActivity) }}
                   </span>
                 </div>
-                
+
                 <!-- Property info -->
                 <div class="flex items-center mb-2">
                   <div class="w-2 h-2 bg-[#F62E56] rounded-full mr-2"></div>
@@ -186,17 +186,17 @@
                     {{ conversation.propertyTitle || 'Unknown Property' }}
                   </p>
                 </div>
-                
+
                 <!-- Last message -->
                 <div class="flex items-center justify-between">
                   <p class="flex-1 text-sm text-gray-600 truncate">
                     <span v-if="conversation.lastMessage?.senderId?._id === authStore?.currentUser?.id" class="font-medium text-gray-400">
-                      Bạn: 
+                      Bạn:
                     </span>
                     {{ conversation.lastMessage?.content || 'Chưa có tin nhắn' }}
                   </p>
                 </div>
-                
+
                 <!-- Typing indicator -->
                 <div
                   v-if="chatStore?.isUserTyping && chatStore.isUserTyping(getOtherParticipant(conversation)?._id, conversation._id)"
@@ -228,11 +228,11 @@
           </div>
           <h3 class="mb-3 text-xl font-semibold text-gray-900">Chọn cuộc trò chuyện</h3>
           <p class="mb-6 text-gray-600">Chọn một cuộc trò chuyện để bắt đầu nhắn tin real-time với người mua/bán bất động sản</p>
-          
+
           <!-- Navigation shortcuts - Enhanced -->
           <div class="grid grid-cols-1 gap-3">
-            <NuxtLink 
-              to="/" 
+            <NuxtLink
+              to="/"
               class="inline-flex items-center justify-center px-6 py-4 bg-gradient-to-r from-[#F62E56] to-pink-600 text-white rounded-xl hover:from-[#F62E56]/90 hover:to-pink-600/90 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
             >
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,7 +240,7 @@
               </svg>
               Tìm bất động sản
             </NuxtLink>
-            
+
             <button
               v-if="previousPropertyUrl"
               @click="goBackToProperty"
@@ -331,7 +331,7 @@
               <div class="bg-gradient-to-r from-[#F62E56]/10 to-pink-600/10 rounded-xl p-3 max-w-xs border border-[#F62E56]/20">
                 <p class="mb-2 text-sm font-semibold text-gray-900 truncate">{{ activeConversationData?.propertyTitle || 'Unknown Property' }}</p>
                 <div class="flex flex-wrap gap-1">
-                  <button 
+                  <button
                     v-if="activeConversationData?.propertyUrl"
                     @click="goToProperty(activeConversationData.propertyUrl)"
                     class="text-xs text-[#F62E56] hover:text-[#F62E56]/80 font-medium transition-colors bg-white/50 px-2 py-1 rounded-md"
@@ -364,23 +364,23 @@
             <div
               :class="[
                 'max-w-xs lg:max-w-md px-4 py-3 rounded-2xl relative shadow-sm',
-                message.senderId?._id === authStore?.currentUser?.id 
-                  ? 'bg-gradient-to-r from-[#F62E56] to-pink-600 text-white' 
+                message.senderId?._id === authStore?.currentUser?.id
+                  ? 'bg-gradient-to-r from-[#F62E56] to-pink-600 text-white'
                   : 'bg-white text-gray-900 border border-gray-200'
               ]"
             >
               <p class="text-sm leading-relaxed">{{ message.content || '' }}</p>
-              
+
               <div
                 :class="[
                   'flex items-center justify-between mt-2 text-xs',
-                  message.senderId?._id === authStore?.currentUser?.id 
-                    ? 'text-pink-100' 
+                  message.senderId?._id === authStore?.currentUser?.id
+                    ? 'text-pink-100'
                     : 'text-gray-500'
                 ]"
               >
                 <span>{{ formatTime(message.createdAt) }}</span>
-                
+
                 <!-- Message status for sent messages -->
                 <div
                   v-if="message.senderId?._id === authStore?.currentUser?.id"
@@ -433,14 +433,14 @@
                   @blur="handleBlur"
                   :disabled="isSending"
                 ></textarea>
-                
+
                 <!-- Character count -->
                 <div v-if="newMessage && newMessage.length > 100" class="absolute text-xs text-gray-400 bottom-2 right-12">
                   {{ newMessage.length }}/1000
                 </div>
               </div>
             </div>
-            
+
             <!-- Send Button -->
             <button
               type="submit"
@@ -499,58 +499,58 @@ const authStore = useAuthStore() || {}
 function loadNavigationData() {
   console.log('🔧 Loading navigation data...')
   console.log('🔧 Route query:', route.query)
-  
+
   // Priority 1: From route query parameters
   if (route.query.from) {
     previousPropertyUrl.value = decodeURIComponent(route.query.from)
     console.log('✅ Got property URL from route:', previousPropertyUrl.value)
-    
+
     if (route.query.title) {
       previousPropertyTitle.value = decodeURIComponent(route.query.title)
       console.log('✅ Got property title from route:', previousPropertyTitle.value)
     }
   }
-  
+
   // Priority 2: From sessionStorage
   if (process.client) {
     try {
       const storedUrl = sessionStorage.getItem('lastViewedProperty')
       const storedTitle = sessionStorage.getItem('lastViewedPropertyTitle')
-      
+
       console.log('🔧 SessionStorage URL:', storedUrl)
       console.log('🔧 SessionStorage Title:', storedTitle)
-      
+
       if (storedUrl && !previousPropertyUrl.value) {
         previousPropertyUrl.value = storedUrl
         console.log('✅ Using sessionStorage URL:', previousPropertyUrl.value)
       }
-      
+
       if (storedTitle && !previousPropertyTitle.value) {
         previousPropertyTitle.value = storedTitle
         console.log('✅ Using sessionStorage title:', previousPropertyTitle.value)
       }
-      
+
       // Check if there are recent properties
       const recentProperties = JSON.parse(sessionStorage.getItem('recentProperties') || '[]')
-      hasRecentProperty.value = recentProperties.length > 0
+      hasRecentproperty.value = recentProperties.length > 0
       console.log('🔧 Recent properties count:', recentProperties.length)
-      
+
     } catch (error) {
       console.error('❌ Error reading sessionStorage:', error)
     }
   }
-  
+
   console.log('🔧 Final navigation data:', {
     url: previousPropertyUrl.value,
     title: previousPropertyTitle.value,
-    hasRecent: hasRecentProperty.value
+    hasRecent: hasRecentproperty.value
   })
 }
 
 // ✅ Enhanced navigation methods
 function goBackToProperty() {
   console.log('🔧 Going back to property:', previousPropertyUrl.value)
-  
+
   if (previousPropertyUrl.value) {
     // Store current chat context
     if (process.client) {
@@ -596,9 +596,9 @@ const filteredConversations = computed(() => {
   if (!chatStore.conversations || !Array.isArray(chatStore.conversations)) {
     return []
   }
-  
+
   if (!searchQuery.value) return chatStore.conversations
-  
+
   return chatStore.conversations.filter(conv => {
     const otherParticipant = getOtherParticipant(conv)
     return otherParticipant?.name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
@@ -635,14 +635,14 @@ function getOtherParticipant(conversation) {
 
 function formatTime(timestamp) {
   if (!timestamp) return ''
-  
+
   try {
     const date = new Date(timestamp)
     const now = new Date()
     const diffMs = now - date
     const diffHours = diffMs / (1000 * 60 * 60)
     const diffDays = diffMs / (1000 * 60 * 60 * 24)
-    
+
     if (diffHours < 1) {
       const diffMinutes = Math.floor(diffMs / (1000 * 60))
       return diffMinutes < 1 ? 'Vừa xong' : `${diffMinutes} phút`
@@ -662,7 +662,7 @@ async function selectConversation(conversationId) {
   if (chatStore.setActiveConversation) {
     chatStore.setActiveConversation(conversationId)
   }
-  
+
   await nextTick()
   scrollToBottom()
   focusInput()
@@ -672,34 +672,34 @@ async function sendMessage() {
   if (!newMessage.value || !newMessage.value.trim() || isSending.value) {
     return
   }
-  
+
   if (!chatStore.activeConversation) {
     if (process.client) {
       alert('Không có cuộc trò chuyện nào được chọn')
     }
     return
   }
-  
+
   isSending.value = true
   const messageContent = newMessage.value.trim()
-  
+
   try {
     newMessage.value = ''
     resetTextareaHeight()
-    
+
     if (chatStore.sendMessage) {
       await chatStore.sendMessage(chatStore.activeConversation, messageContent)
     }
-    
+
     await nextTick()
     scrollToBottom()
     focusInput()
-    
+
   } catch (error) {
     console.error('❌ Error sending message:', error)
     newMessage.value = messageContent
     focusInput()
-    
+
   } finally {
     isSending.value = false
   }
@@ -730,14 +730,14 @@ function handleInput(event) {
     const newHeight = Math.min(Math.max(textarea.scrollHeight, 48), 120)
     textarea.style.height = newHeight + 'px'
   }
-  
+
   if (activeConversationPartner.value && chatStore.activeConversation && chatStore.sendTyping) {
     chatStore.sendTyping(chatStore.activeConversation, activeConversationPartner.value._id)
-    
+
     if (typingTimer.value) {
       clearTimeout(typingTimer.value)
     }
-    
+
     typingTimer.value = setTimeout(() => {
       if (activeConversationPartner.value && chatStore.activeConversation && chatStore.stopTyping) {
         chatStore.stopTyping(chatStore.activeConversation, activeConversationPartner.value._id)
@@ -781,16 +781,16 @@ function handleScroll() {
 // ✅ Lifecycle management
 onMounted(async () => {
   console.log('🚀 Chat page mounted')
-  
+
   // Load navigation data
   loadNavigationData()
-  
+
   // Check authentication
   if (!authStore.currentUser) {
     await navigateTo('/login')
     return
   }
-  
+
   try {
     if (chatStore.initChat) {
       await chatStore.initChat()
@@ -810,7 +810,7 @@ watch(() => chatStore.activeConversation, (newVal, oldVal) => {
   if (newVal !== oldVal) {
     nextTick(() => {
       scrollToBottom()
-      
+
       if (newVal && chatStore.markAsRead) {
         chatStore.markAsRead(newVal)
       }

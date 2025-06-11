@@ -50,4 +50,4 @@ conversationSchema.index({ property: 1 });
 conversationSchema.index({ participants: 1 });
 conversationSchema.index({ status: 1 });
 
-export default mongoose.model('Conversation', conversationSchema);
+module.exports =  mongoose.model('Conversation', conversationSchema);

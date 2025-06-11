@@ -4,7 +4,8 @@ const router = express.Router()
 // Assuming ES Modules or require works for .js files from .cjs context
 // If not, this might need adjustment during testing/integration
 const authController = require('../controllers/auth.controller.js')
-const { auth } = require('../middleware/auth.js'); // Import the auth middleware
+const auth = require('../middleware/auth.js')
+// const { auth } = require('../middleware/auth.js'); // Import the auth middleware
 
 // POST /api/auth/register - User registration
 router.post('/register', authController.register)

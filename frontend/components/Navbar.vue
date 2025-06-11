@@ -79,7 +79,7 @@
         >
           Mua nhà
         </NuxtLink>
-        
+
         <NuxtLink
           to="/rent"
           :class="[
@@ -91,7 +91,7 @@
         >
           Thuê nhà
         </NuxtLink>
-        
+
         <NuxtLink
           to="/projects"
           :class="[
@@ -103,7 +103,7 @@
         >
           Dự án
         </NuxtLink>
-        
+
         <NuxtLink
           to="/news"
           :class="[
@@ -115,7 +115,7 @@
         >
           Tin tức
         </NuxtLink>
-        
+
         <NuxtLink
           to="/contact"
           :class="[
@@ -137,7 +137,7 @@
           <div class="text-xs text-gray-500">
             Debug: {{ currentUser ? 'Logged In' : 'Not Logged In' }}
           </div>
-          
+
           <!-- Login Button -->
           <NuxtLink
             to="/login"
@@ -145,9 +145,9 @@
           >
             Đăng nhập
           </NuxtLink>
-          
+
           <div class="w-px h-6 bg-[#E4E4E7]"></div>
-          
+
           <!-- Register Button -->
           <NuxtLink
             to="/register"
@@ -156,14 +156,14 @@
             Đăng ký
           </NuxtLink>
         </template>
-        
+
         <!-- Show profile when authenticated -->
         <template v-else>
           <!-- Debug Info (remove in production) -->
           <div class="text-xs text-gray-500">
             Debug: {{ currentUser.name || currentUser.email }}
           </div>
-          
+
           <!-- Profile Dropdown -->
           <div class="relative">
             <button
@@ -211,7 +211,7 @@
                 Admin
               </span>
             </button>
-            
+
             <!-- Dropdown Menu -->
             <div
               v-if="showDropdown"
@@ -366,26 +366,17 @@ const route = useRoute();
 const profileBtn = ref(null);
 const dropdownMenu = ref(null);
 
-// 🔧 DEBUG LOGS
-console.log('🔧 Navbar component loaded')
-console.log('🔧 Router available:', !!router)
-console.log('🔧 Route available:', !!route)
-console.log('🔧 Current route:', route.path)
-console.log('🔧 AuthStore available:', !!authStore)
-console.log('🔧 Current user:', currentUser.value)
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 2;
 };
 
 function logout() {
-  console.log('🔧 Logout clicked')
   authStore.logout();
   showDropdown.value = false;
 }
 
 function toggleDropdown() {
-  console.log('🔧 Dropdown toggled')
   showDropdown.value = !showDropdown.value;
 }
 
@@ -401,27 +392,19 @@ function handleClickOutside(e) {
 }
 
 onMounted(() => {
-  console.log('🔧 Navbar mounted successfully')
-  console.log('🔧 Current route on mount:', route.path)
-  console.log('🔧 Router methods available:', Object.keys(router))
-  console.log('🔧 Auth state on mount:', {
-    user: authStore.user,
-    isAuthenticated: authStore.isAuthenticated
-  })
-  
+
+
   window.addEventListener("scroll", handleScroll);
   document.addEventListener("click", handleClickOutside);
 });
 
 onUnmounted(() => {
-  console.log('🔧 Navbar unmounted')
   window.removeEventListener("scroll", handleScroll);
   document.removeEventListener("click", handleClickOutside);
 });
 
 // Watch currentUser changes for debugging
 watch(currentUser, (newUser) => {
-  console.log('🔧 CurrentUser changed in Navbar:', newUser)
 }, { immediate: true })
 </script>
 

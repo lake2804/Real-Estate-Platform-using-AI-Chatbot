@@ -21,21 +21,21 @@ export const registerValidation = [
     .withMessage('Full name is required')
     .isLength({ min: 2, max: 100 })
     .withMessage('Full name must be between 2 and 100 characters'),
-  
+
   body('email')
     .isEmail()
     .withMessage('Please provide a valid email')
     .normalizeEmail(),
-  
+
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long'),
-  
+
   body('phone')
     .optional()
     .matches(/^[0-9]{10,11}$/)
     .withMessage('Phone number must be 10-11 digits'),
-  
+
   body('address')
     .optional()
     .isLength({ max: 200 })
@@ -47,7 +47,7 @@ export const loginValidation = [
     .isEmail()
     .withMessage('Please provide a valid email')
     .normalizeEmail(),
-  
+
   body('password')
     .notEmpty()
     .withMessage('Password is required')
@@ -57,7 +57,7 @@ export const changePasswordValidation = [
   body('currentPassword')
     .notEmpty()
     .withMessage('Current password is required'),
-  
+
   body('newPassword')
     .isLength({ min: 6 })
     .withMessage('New password must be at least 6 characters long')
@@ -71,21 +71,21 @@ export const propertyValidation = [
     .withMessage('Title is required')
     .isLength({ max: 200 })
     .withMessage('Title cannot exceed 200 characters'),
-  
+
   body('name')
     .trim()
     .notEmpty()
     .withMessage('Property name is required')
     .isLength({ max: 100 })
     .withMessage('Name cannot exceed 100 characters'),
-  
+
   body('description')
     .trim()
     .notEmpty()
     .withMessage('Description is required')
     .isLength({ min: 50 })
     .withMessage('Description must be at least 50 characters'),
-  
+
   body('price')
     .isNumeric()
     .withMessage('Price must be a number')
@@ -95,24 +95,24 @@ export const propertyValidation = [
       }
       return true;
     }),
-  
+
   body('type')
     .isIn(['sale', 'rent'])
     .withMessage('Type must be either sale or rent'),
-  
+
   body('location')
     .trim()
     .notEmpty()
     .withMessage('Location is required'),
-  
+
   body('bedrooms')
     .isInt({ min: 0 })
     .withMessage('Bedrooms must be a non-negative integer'),
-  
+
   body('bathrooms')
     .isInt({ min: 0 })
     .withMessage('Bathrooms must be a non-negative integer'),
-  
+
   body('area')
     .isNumeric()
     .withMessage('Area must be a number')
@@ -124,7 +124,7 @@ export const propertyValidation = [
     })
 ];
 
-export default {
+module.exports =  {
   handleValidationErrors,
   registerValidation,
   loginValidation,

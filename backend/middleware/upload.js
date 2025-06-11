@@ -51,7 +51,7 @@ export const handleMulterError = (err, req, res, next) => {
       });
     }
   }
-  
+
   if (err.message === 'Only image files are allowed!') {
     return res.status(400).json({
       success: false,
@@ -69,4 +69,4 @@ export const uploadFields = upload.fields([
   { name: 'images', maxCount: 10 }
 ]);
 
-export default upload;
+module.exports =  upload;

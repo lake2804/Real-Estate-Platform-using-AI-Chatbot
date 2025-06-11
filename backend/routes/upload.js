@@ -67,4 +67,4 @@ router.post('/single', authenticateToken, upload.single('file'), (req, res) => {
   }
 });
 
-export default router;
+module.exports =  router;

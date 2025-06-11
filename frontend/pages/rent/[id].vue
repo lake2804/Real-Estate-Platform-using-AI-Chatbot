@@ -42,7 +42,7 @@
           />
         </div>
       </div>
-      
+
       <!-- Info -->
       <div class="flex flex-col gap-4">
         <h1 class="text-2xl font-bold text-gray-900 md:text-3xl">{{ product?.title }}</h1>
@@ -53,7 +53,7 @@
           {{ product?.location }}
         </div>
         <div class="text-3xl font-bold text-[#F62E56]">{{ formatPrice(product?.price) }}</div>
-        
+
         <!-- Action Buttons with Chat Integration -->
         <div class="flex flex-wrap gap-3 mt-2">
           <!-- Contact Button -->
@@ -87,7 +87,7 @@
           </button>
 
           <!-- Quick Chat Button -->
-          <button 
+          <button
             @click="handleQuickChat"
             class="flex items-center gap-2 px-6 py-3 font-semibold text-gray-700 transition-colors border border-gray-300 rounded hover:bg-gray-100"
           >
@@ -98,7 +98,7 @@
             Nhắn tin
           </button>
         </div>
-        
+
         <!-- Property Stats -->
         <div class="flex flex-wrap gap-6 mt-4">
           <div class="flex items-center gap-2">
@@ -121,7 +121,7 @@
             <span>{{ product?.direction }}</span>
           </div>
         </div>
-        
+
         <!-- Interior Features -->
         <div class="mt-4">
           <h3 class="mb-2 font-semibold">Tiện nghi nội thất</h3>
@@ -137,8 +137,8 @@
         <div v-if="product?.owner" class="p-4 mt-4 border rounded-lg bg-gray-50">
           <h3 class="mb-3 font-semibold text-gray-900">Thông tin chủ sở hữu</h3>
           <div class="flex items-center gap-3">
-            <img 
-              :src="product.owner.avatar || 'https://randomuser.me/api/portraits/men/1.jpg'" 
+            <img
+              :src="product.owner.avatar || 'https://randomuser.me/api/portraits/men/1.jpg'"
               :alt="product.owner.name"
               class="object-cover w-12 h-12 rounded-full"
             />
@@ -214,26 +214,26 @@ const { data: propertyResponse, pending, error } = await useFetch(`${config.publ
 // Transform property data
 const product = computed(() => {
   if (!propertyResponse.value?.success || !propertyResponse.value?.data) return null
-  
+
   const property = propertyResponse.value.data
   return {
-    id: property._id,
-    title: property.title,
-    name: property.name,
-    image: property.images?.[0] || '',
-    images: property.images || [],
-    price: property.price,
-    type: property.type,
-    location: property.location?.district || property.location?.address || '',
-    rooms: `${property.details?.bedrooms || 0}PN/${property.details?.bathrooms || 0}WC`,
-    bedrooms: property.details?.bedrooms || 0,
-    bathrooms: property.details?.bathrooms || 0,
-    area: property.details?.area || 0,
-    direction: property.details?.direction || '',
-    interior: property.amenities || [],
-    description: property.description || '',
-    advantages: property.advantages || '',
-    views: property.views || 0
+    id: property?._id,
+    title: property?.title,
+    name: property?.name,
+    image: property?.images?.[0] || '',
+    images: property?.images || [],
+    price: property?.price,
+    type: property?.type,
+    location: property?.location?.district || property?.location?.address || '',
+    rooms: `${property?.details?.bedrooms || 0}PN/${property?.details?.bathrooms || 0}WC`,
+    bedrooms: property?.details?.bedrooms || 0,
+    bathrooms: property?.details?.bathrooms || 0,
+    area: property?.details?.area || 0,
+    direction: property?.details?.direction || '',
+    interior: property?.amenities || [],
+    description: property?.description || '',
+    advantages: property?.advantages || '',
+    views: property?.views || 0
   }
 })
 
@@ -244,40 +244,40 @@ const activeImage = ref('')
 watch(product, async (val) => {
   if (val) {
     activeImage.value = val.images?.[0] || val.image || ''
-    
+
     // Load related properties
     try {
       const response = await $fetch(`${config.public.apiBase}/properties`, {
-        query: { 
+        query: {
           type: 'sale',
           limit: 4
         }
       })
-      
+
       if (response.success) {
         relatedProducts.value = response.data
           .filter(item => item._id !== val.id)
           .slice(0, 4)
           .map(property => ({
-            id: property._id,
-            _id: property._id,
-            title: property.title,
-            name: property.name,
-            image: property.images?.[0] || '',
-            images: property.images || [],
-            price: property.price,
-            type: property.type,
-            location: property.location?.district || '',
-            rooms: `${property.details?.bedrooms || 0}PN/${property.details?.bathrooms || 0}WC`,
-            bedrooms: property.details?.bedrooms || 0,
-            bathrooms: property.details?.bathrooms || 0,
-            area: property.details?.area || 0,
-            direction: property.details?.direction || '',
-            interior: property.amenities || [],
-            description: property.description || '',
-            advantages: property.advantages || '',
-            featured: property.featured || false,
-            views: property.views || 0
+            id: property?._id,
+            _id: property?._id,
+            title: property?.title,
+            name: property?.name,
+            image: property?.images?.[0] || '',
+            images: property?.images || [],
+            price: property?.price,
+            type: property?.type,
+            location: property?.location?.district || '',
+            rooms: `${property?.details?.bedrooms || 0}PN/${property?.details?.bathrooms || 0}WC`,
+            bedrooms: property?.details?.bedrooms || 0,
+            bathrooms: property?.details?.bathrooms || 0,
+            area: property?.details?.area || 0,
+            direction: property?.details?.direction || '',
+            interior: property?.amenities || [],
+            description: property?.description || '',
+            advantages: property?.advantages || '',
+            featured: property?.featured || false,
+            views: property?.views || 0
           }))
       }
     } catch (error) {

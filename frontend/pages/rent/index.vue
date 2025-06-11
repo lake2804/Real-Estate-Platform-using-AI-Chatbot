@@ -22,11 +22,11 @@
             với từ khóa: "<span class="font-semibold text-[#F62E56]">{{ route.query.keyword }}</span>"
           </span>
         </div>
-        
+
         <!-- Sort Options -->
         <div class="flex items-center space-x-4">
-          <select 
-            v-model="sort" 
+          <select
+            v-model="sort"
             @change="loadRentProperties"
             class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
           >
@@ -37,7 +37,7 @@
           </select>
         </div>
       </div>
-      
+
       <!-- Loading State -->
       <div v-if="loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         <div v-for="n in 8" :key="n" class="overflow-hidden bg-white rounded-lg shadow-sm animate-pulse">
@@ -49,7 +49,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Error State -->
       <div v-else-if="errorMsg" class="py-20 text-center">
         <div class="max-w-md mx-auto">
@@ -58,15 +58,15 @@
           </svg>
           <h3 class="mb-2 text-lg font-semibold">Lỗi tải dữ liệu!</h3>
           <p class="text-gray-500">{{ errorMsg }}</p>
-          <button 
-            @click="refreshRent()" 
+          <button
+            @click="refreshRent()"
             class="px-4 py-2 mt-4 text-white bg-red-500 rounded-lg hover:bg-red-600"
           >
             Thử lại
           </button>
         </div>
       </div>
-      
+
       <!-- Results -->
       <div v-else>
         <!-- No Results -->
@@ -77,18 +77,18 @@
           <h3 class="mb-2 text-xl font-bold text-gray-700">Không tìm thấy sản phẩm!</h3>
           <p class="text-gray-500">Hãy thử thay đổi từ khóa hoặc bộ lọc tìm kiếm.</p>
         </div>
-        
+
         <!-- Properties Grid -->
         <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           <PropertyCard
             v-for="property in paginatedRentProperties"
-            :key="property.id || property._id"
+            :key="property?.id || property?._id"
             :property="property"
             :isRent="true"
           />
         </div>
       </div>
-      
+
       <!-- Pagination -->
       <div v-if="rentTotalPages > 1" class="flex justify-center mt-8">
         <nav class="flex space-x-2">
@@ -102,7 +102,7 @@
             </svg>
             Trước
           </button>
-          
+
           <button
             v-for="pageNum in rentVisiblePages"
             :key="pageNum"
@@ -114,7 +114,7 @@
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
             ]"
           >{{ pageNum }}</button>
-          
+
           <button
             v-if="page < rentTotalPages"
             @click="goToRentPage(page + 1)"
@@ -163,26 +163,26 @@ const sort = ref('newest')
 
 // ✅ Transform backend data to frontend format - FOR RENT
 const transformRentProperty = (property) => ({
-  id: property._id,
-  _id: property._id,
-  title: property.title,
-  name: property.title,
-  image: property.images?.[0] || property.image || 'https://picsum.photos/600/400',
-  images: property.images || [],
-  price: property.price,
-  location: property.location?.district ? 
-    `${property.location.district}, ${property.location.city}` : 
-    (property.location?.address || property.location?.city || ''),
-  bedrooms: property.details?.bedrooms || property.bedrooms || 0,
-  bathrooms: property.details?.bathrooms || property.bathrooms || 0,
-  area: property.details?.area || property.area || 0,
-  type: property.type || 'rent', // ✅ RENT TYPE
-  category: property.category,
-  description: property.description,
-  featured: property.featured || false,
-  status: property.status,
-  createdAt: property.createdAt,
-  views: property.views || 0
+  id: property?._id,
+  _id: property?._id,
+  title: property?.title,
+  name: property?.title,
+  image: property?.images?.[0] || property?.image || 'https://picsum.photos/600/400',
+  images: property?.images || [],
+  price: property?.price,
+  location: property?.location?.district ?
+    `${property?.location.district}, ${property?.location.city}` :
+    (property?.location?.address || property?.location?.city || ''),
+  bedrooms: property?.details?.bedrooms || property?.bedrooms || 0,
+  bathrooms: property?.details?.bathrooms || property?.bathrooms || 0,
+  area: property?.details?.area || property?.area || 0,
+  type: property?.type || 'rent', // ✅ RENT TYPE
+  category: property?.category,
+  description: property?.description,
+  featured: property?.featured || false,
+  status: property?.status,
+  createdAt: property?.createdAt,
+  views: property?.views || 0
 })
 
 // ✅ Load properties function - FOR RENT
@@ -190,7 +190,7 @@ const loadRentProperties = async () => {
   try {
     loading.value = true
     errorMsg.value = null
-    
+
     const filters = {
       page: page.value,
       limit: limit,
@@ -203,7 +203,7 @@ const loadRentProperties = async () => {
 
     const response = await getPropertiesForRent(limit, filters) // ✅ FOR RENT
     console.log('[rent/index.vue] loadRentProperties - Raw API Response:', JSON.stringify(response));
-    
+
     console.log('📦 RENT API Response:', response)
 
     if (response.success && response.data) {
@@ -219,10 +219,10 @@ const loadRentProperties = async () => {
     } else {
       throw new Error('No data received from API')
     }
-    
+
     console.log(`✅ Loaded ${saleProperties.value.length} RENT properties`)
     console.log('🏠 RENT Properties data:', saleProperties.value)
-    
+
   } catch (err) {
     console.error('[rent/index.vue] loadRentProperties - Caught Error:', JSON.stringify(err.message));
     console.log('[rent/index.vue] loadRentProperties - Error ref value:', JSON.stringify(errorMsg.value));
@@ -255,7 +255,7 @@ const rentVisiblePages = computed(() => {
   const maxPages = Math.min(rentTotalPages.value, 5)
   const start = Math.max(1, page.value - Math.floor(maxPages / 2))
   const end = Math.min(rentTotalPages.value, start + maxPages - 1)
-  
+
   for (let i = start; i <= end; i++) {
     pages.push(i)
   }

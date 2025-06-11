@@ -1,17 +1,16 @@
 export const useApi = () => {
   const config = useRuntimeConfig()
-  
+
   // ✅ FIXED: Force the correct API base URL
   const apiBase = 'http://localhost:4000/api'
-  
-  console.log('🔧 API Base URL:', apiBase)
-  
+
+
   const $api = $fetch.create({
     baseURL: apiBase,
     onRequest({ request, options }) {
       // request is typically the path (e.g., '/properties')
       // options.baseURL is the base URL set in $fetch.create (e.g., 'http://localhost:4000/api')
-      
+
       let targetUrl;
       try {
         // If request is already an absolute URL, use it directly
@@ -29,7 +28,6 @@ export const useApi = () => {
         targetUrl = `[Could not determine target URL for request: ${request}]`;
       }
 
-      console.log('🔧 API Request:', targetUrl);
 
       const token = useCookie('auth-token');
       if (token.value) {
@@ -39,7 +37,6 @@ export const useApi = () => {
     },
     onResponse({ request, response, options }) {
       // Log successful responses
-      console.log('[useApi] Successful Response for:', request, 'Status:', response.status);
       // To avoid overly verbose logs for large data, you might log selectively:
       if (response._data && typeof response._data === 'object') {
         const dataSummary = { ...response._data };
@@ -47,34 +44,31 @@ export const useApi = () => {
           dataSummary.data = `Array of ${dataSummary.data.length} items (first 5 shown)`;
           dataSummary.originalData = response._data.data.slice(0,5); // keep a sample
         }
-        console.log('[useApi] Response Data Summary:', JSON.stringify(dataSummary, null, 2));
       } else {
-        console.log('[useApi] Response Data:', response._data);
       }
     },
     onResponseError({ response, request }) {
       const cleanUrl = request.toString().startsWith('/') ? request : `/${request}`
       const fullUrl = `${apiBase}${cleanUrl}`
       console.error(`❌ API Error [${response.status}]:`, fullUrl)
-      
+
       if (response.status === 401) {
         const token = useCookie('auth-token')
         token.value = null
-        
+
         if (process.client && !window.location.pathname.includes('/login')) {
           navigateTo('/login')
         }
       }
     }
   })
-  
+
   return {
     $api,
     apiBase,
-    
-    // ✅ Properties API 
+
+    // ✅ Properties API
     getPropertiesForSale: async (limit = 12, filters = {}) => {
-      console.log('[useApi] getPropertiesForSale - Filters:', JSON.stringify(filters));
       try {
         const params = new URLSearchParams({
           type: 'sale',
@@ -82,9 +76,8 @@ export const useApi = () => {
           featured: 'true',
           ...filters
         })
-        const apiUrl = `/properties?${params}`; console.log('[useApi] getPropertiesForSale - Fetching URL:', apiUrl);
+        const apiUrl = `/properties?${params}`;
         const response = await $api(apiUrl)
-        console.log('[useApi] getPropertiesForSale - Raw Response:', JSON.stringify(response));
         return response
       } catch (error) {
         console.error('[useApi] getPropertiesForSale - Caught Error:', JSON.stringify(error.message), JSON.stringify(error.data));
@@ -92,19 +85,17 @@ export const useApi = () => {
         return { success: false, data: [], error: error.message }
       }
     },
-    
+
     getPropertiesForRent: async (limit = 12, filters = {}) => {
-      console.log('[useApi] getPropertiesForRent - Filters:', JSON.stringify(filters));
       try {
         const params = new URLSearchParams({
-          type: 'rent', 
+          type: 'rent',
           limit: limit.toString(),
           featured: 'true',
           ...filters
         })
-        const apiUrl = `/properties?${params}`; console.log('[useApi] getPropertiesForRent - Fetching URL:', apiUrl);
+        const apiUrl = `/properties?${params}`;
         const response = await $api(apiUrl)
-        console.log('[useApi] getPropertiesForRent - Raw Response:', JSON.stringify(response));
         return response
       } catch (error) {
         console.error('[useApi] getPropertiesForRent - Caught Error:', JSON.stringify(error.message), JSON.stringify(error.data));
@@ -112,7 +103,7 @@ export const useApi = () => {
         return { success: false, data: [], error: error.message }
       }
     },
-    
+
     getPropertyById: async (id) => {
       try {
         return await $api(`/properties/${id}`)
@@ -121,7 +112,7 @@ export const useApi = () => {
         return { success: false, data: null, error: error.message }
       }
     },
-    
+
     getFeaturedProperties: async (limit = 8) => {
       try {
         return await $api(`/properties/featured?limit=${limit}`)
@@ -130,7 +121,7 @@ export const useApi = () => {
         return { success: false, data: [], error: error.message }
       }
     },
-    
+
     // ✅ Projects API
     getFeaturedProjects: async (limit = 8, filters = {}) => {
       try {
@@ -145,7 +136,7 @@ export const useApi = () => {
         return { success: false, data: [], error: error.message }
       }
     },
-    
+
     getFeaturedProjectById: async (id) => {
       try {
         return await $api(`/projects/${id}`)
@@ -154,7 +145,7 @@ export const useApi = () => {
         return { success: false, data: null, error: error.message }
       }
     },
-    
+
     // ✅ News API methods
     getNews: async (limit = 10, filters = {}) => {
       try {
@@ -168,7 +159,7 @@ export const useApi = () => {
         return { success: false, data: [], error: error.message }
       }
     },
-    
+
     getFeaturedNews: async (limit = 6) => {
       try {
         const response = await $api(`/news/featured?limit=${limit}`)
@@ -178,7 +169,7 @@ export const useApi = () => {
         return { success: false, data: [], error: error.message }
       }
     },
-    
+
     getNewsById: async (id) => {
       try {
         return await $api(`/news/${id}`)
@@ -187,7 +178,7 @@ export const useApi = () => {
         return { success: false, data: null, error: error.message }
       }
     },
-    
+
     // ✅ Search API
     getSearchFilters: async () => {
       try {
@@ -198,7 +189,7 @@ export const useApi = () => {
         return { success: false, data: {}, error: error.message }
       }
     },
-    
+
     getPopularSearches: async () => {
       try {
         const response = await $api('/properties/search/popular')
