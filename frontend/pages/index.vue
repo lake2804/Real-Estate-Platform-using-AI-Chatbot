@@ -531,12 +531,13 @@ const transformNews = (article) => {
 // ✅ FIXED: CORRECT API CALLS
 const loadFeaturedProjects = async () => {
   try {
-    isLoadingProjects.value = true
-    console.log('🔄 Loading projects (using all endpoint)...')
+    isLoadingProjects.value = true;
+    console.log('[index.vue] loadFeaturedProjects - Starting load...');
+    const apiUrl = '/projects/featured?limit=8';
+    console.log('[index.vue] loadFeaturedProjects - Fetching URL with $api:', apiUrl);
     
-    // ✅ Use all projects endpoint since featured is empty
-    const response = await $api('/projects?limit=8')
-    console.log('📦 Projects API Response:', response)
+    const response = await $api(apiUrl);
+    console.log('[index.vue] loadFeaturedProjects - Raw API Response:', JSON.stringify(response));
     
     if (response?.success && response?.data) {
       const transformedProjects = response.data
@@ -565,12 +566,13 @@ const loadFeaturedProjects = async () => {
 
 const loadRentalProperties = async () => {
   try {
-    isLoadingRentals.value = true
-    console.log('🔄 Loading rental properties...')
+    isLoadingRentals.value = true;
+    console.log('[index.vue] loadRentalProperties - Starting load...');
+    const apiUrl = '/properties?type=rent&limit=12&featured=true';
+    console.log('[index.vue] loadRentalProperties - Fetching URL with $api:', apiUrl);
     
-    // ✅ Keep existing - this is working
-    const response = await $api('/properties?type=rent&limit=12&featured=true')
-    console.log('📦 Rentals API Response:', response)
+    const response = await $api(apiUrl);
+    console.log('[index.vue] loadRentalProperties - Raw API Response:', JSON.stringify(response));
     
     if (response?.success && response?.data) {
       const transformedRentals = response.data
@@ -599,12 +601,13 @@ const loadRentalProperties = async () => {
 
 const loadSaleProperties = async () => {
   try {
-    isLoadingSales.value = true
-    console.log('🔄 Loading sale properties...')
+    isLoadingSales.value = true;
+    console.log('[index.vue] loadSaleProperties - Starting load...');
+    const apiUrl = '/properties?type=sale&limit=12&featured=true';
+    console.log('[index.vue] loadSaleProperties - Fetching URL with $api:', apiUrl);
     
-    // ✅ Keep existing - this is working
-    const response = await $api('/properties?type=sale&limit=12&featured=true')
-    console.log('📦 Sales API Response:', response)
+    const response = await $api(apiUrl);
+    console.log('[index.vue] loadSaleProperties - Raw API Response:', JSON.stringify(response));
     
     if (response?.success && response?.data) {
       const transformedSales = response.data
@@ -633,13 +636,14 @@ const loadSaleProperties = async () => {
 
 const loadFeaturedNews = async () => {
   try {
-    newsLoading.value = true
-    newsError.value = null
-    console.log('🔄 Loading news (using all endpoint)...')
+    newsLoading.value = true;
+    newsError.value = null;
+    console.log('[index.vue] loadFeaturedNews - Starting load...');
+    const apiUrl = '/news/featured?limit=6';
+    console.log('[index.vue] loadFeaturedNews - Fetching URL with $api:', apiUrl);
     
-    // ✅ Use all news endpoint since featured is empty
-    const response = await $api('/news?limit=6')
-    console.log('📦 News API Response:', response)
+    const response = await $api(apiUrl);
+    console.log('[index.vue] loadFeaturedNews - Raw API Response:', JSON.stringify(response));
     
     if (response?.success && response?.data) {
       const transformedNews = response.data

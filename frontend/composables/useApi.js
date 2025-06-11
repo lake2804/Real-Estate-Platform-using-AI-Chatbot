@@ -9,15 +9,32 @@ export const useApi = () => {
   const $api = $fetch.create({
     baseURL: apiBase,
     onRequest({ request, options }) {
-      // ✅ Clean URL formation
-      const cleanUrl = request.toString().startsWith('/') ? request : `/${request}`
-      const fullUrl = `${apiBase}${cleanUrl}`
-      console.log('🔧 API Request:', fullUrl)
+      // request is typically the path (e.g., '/properties')
+      // options.baseURL is the base URL set in $fetch.create (e.g., 'http://localhost:4000/api')
       
-      const token = useCookie('auth-token')
+      let targetUrl;
+      try {
+        // If request is already an absolute URL, use it directly
+        // Otherwise, resolve it against the baseURL from options
+        if (request.toString().startsWith('http://') || request.toString().startsWith('https://')) {
+          targetUrl = request.toString();
+        } else {
+          // Ensure request starts with a slash if it's a path
+          const path = request.toString().startsWith('/') ? request.toString() : `/${request.toString()}`;
+          targetUrl = options.baseURL + path;
+        }
+      } catch (e) {
+        // Fallback in case of unexpected request format
+        console.error('[useApi] Error constructing target URL for logging:', e);
+        targetUrl = `[Could not determine target URL for request: ${request}]`;
+      }
+
+      console.log('🔧 API Request:', targetUrl);
+
+      const token = useCookie('auth-token');
       if (token.value) {
-        options.headers = options.headers || {}
-        options.headers.Authorization = `Bearer ${token.value}`
+        options.headers = options.headers || {};
+        options.headers.Authorization = `Bearer ${token.value}`;
       }
     },
     onResponse({ request, response, options }) {
