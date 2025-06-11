@@ -31,24 +31,22 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useChatStore } from '~/stores/chat'
-import { useUserStore } from '~/stores/user'
+import { useAuthStore } from '~/stores/auth' // Changed from useUserStore
 
 const props = defineProps({
   productId: { type: [String, Number], required: true }
 })
 
 const chatStore = useChatStore()
-const userStore = useUserStore()
+const authStore = useAuthStore() // Changed from userStore
 const input = ref('')
 const messages = computed(() => chatStore.messages[props.productId] || [])
 
 function send() {
   if (!input.value.trim()) return
-  chatStore.sendMessage(props.productId, 'me', input.value)
-  // Giả lập phản hồi bot
-  setTimeout(() => {
-    chatStore.sendMessage(props.productId, 'bot', 'Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm.')
-  }, 1000)
+  // Corrected call: (conversationId, content, messageType)
+  chatStore.sendMessage(props.productId, input.value, 'text')
+  // Removed mock bot response
   input.value = ''
 }
 </script>

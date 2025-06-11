@@ -4,6 +4,12 @@ const cors = require('cors')
 const path = require('path')
 require('dotenv').config()
 
+// Check for JWT_SECRET
+if (!process.env.JWT_SECRET) {
+  console.error("FATAL ERROR: JWT_SECRET is not defined in environment variables.");
+  process.exit(1); // Exit the application if JWT_SECRET is not set
+}
+
 const app = express()
 
 // CORS configuration

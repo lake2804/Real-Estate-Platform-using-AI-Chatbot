@@ -1,9 +1,13 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export const auth = async (req, res, next) => {
+  if (!JWT_SECRET) {
+    console.error("FATAL ERROR: JWT_SECRET is not defined in auth middleware.");
+    return res.status(500).json({ success: false, message: "Server configuration error." });
+  }
   try {
     let token;
 

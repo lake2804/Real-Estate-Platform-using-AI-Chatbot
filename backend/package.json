@@ -7,7 +7,7 @@
     "dev": "nodemon app.js",
     "start": "node app.js",
     "seed": "node scripts/seedProperties.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

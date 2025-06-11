@@ -4,9 +4,16 @@ import User from '../models/User.js';
 
 // Generate JWT token
 const generateToken = (userId) => {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    console.error("FATAL ERROR: JWT_SECRET is not defined in controller.");
+    // This will likely cause jwt.sign to throw an error if secret is undefined.
+    // Consider how the application should behave in this scenario.
+    // For now, proceeding will let jwt.sign handle the undefined secret.
+  }
   return jwt.sign(
     { id: userId },
-    process.env.JWT_SECRET || 'your-secret-key',
+    JWT_SECRET, // Use the fetched constant
     { expiresIn: '7d' }
   );
 };
