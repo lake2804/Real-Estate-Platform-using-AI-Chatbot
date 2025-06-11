@@ -188,6 +188,7 @@ const transformProperty = (property) => ({
 // ✅ Load properties function - FOR SALE
 const loadProperties = async () => {
   try {
+    console.log('[buy/index.vue] loadProperties - Current Filters:', JSON.stringify(filters));
     pending.value = true
     error.value = null
     
@@ -201,15 +202,20 @@ const loadProperties = async () => {
     console.log('🔄 Loading SALE properties with filters:', filters)
 
     const response = await getPropertiesForSale(pageSize, filters) // ✅ FOR SALE
+    console.log('[buy/index.vue] loadProperties - Raw API Response:', JSON.stringify(response));
     
     console.log('📦 SALE API Response:', response)
 
     if (response.success && response.data) {
       properties.value = response.data.map(transformProperty)
+      console.log('[buy/index.vue] loadProperties - Transformed Properties:', JSON.stringify(properties.value.slice(0, 2)));
       totalResults.value = response.pagination?.total || response.total || response.data.length
+      console.log('[buy/index.vue] loadProperties - Total Results:', totalResults.value);
     } else if (response.data) {
       properties.value = response.data.map(transformProperty)
+      console.log('[buy/index.vue] loadProperties - Transformed Properties:', JSON.stringify(properties.value.slice(0, 2)));
       totalResults.value = response.data.length
+      console.log('[buy/index.vue] loadProperties - Total Results:', totalResults.value);
     } else {
       throw new Error('No data received from API')
     }
@@ -218,6 +224,8 @@ const loadProperties = async () => {
     console.log('🏠 SALE Properties data:', properties.value)
     
   } catch (err) {
+    console.error('[buy/index.vue] loadProperties - Caught Error:', JSON.stringify(err.message));
+    console.log('[buy/index.vue] loadProperties - Error ref value:', JSON.stringify(error.value));
     console.error('❌ Error fetching SALE properties:', err)
     error.value = err.message || 'Lỗi khi tải dữ liệu'
     properties.value = []

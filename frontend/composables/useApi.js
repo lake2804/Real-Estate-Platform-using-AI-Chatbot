@@ -42,6 +42,7 @@ export const useApi = () => {
     
     // ✅ Properties API 
     getPropertiesForSale: async (limit = 12, filters = {}) => {
+      console.log('[useApi] getPropertiesForSale - Filters:', JSON.stringify(filters));
       try {
         const params = new URLSearchParams({
           type: 'sale',
@@ -49,15 +50,19 @@ export const useApi = () => {
           featured: 'true',
           ...filters
         })
-        const response = await $api(`/properties?${params}`)
+        const apiUrl = `/properties?${params}`; console.log('[useApi] getPropertiesForSale - Fetching URL:', apiUrl);
+        const response = await $api(apiUrl)
+        console.log('[useApi] getPropertiesForSale - Raw Response:', JSON.stringify(response));
         return response
       } catch (error) {
+        console.error('[useApi] getPropertiesForSale - Caught Error:', JSON.stringify(error.message), JSON.stringify(error.data));
         console.error('❌ Error getting properties for sale:', error)
         return { success: false, data: [], error: error.message }
       }
     },
     
     getPropertiesForRent: async (limit = 12, filters = {}) => {
+      console.log('[useApi] getPropertiesForRent - Filters:', JSON.stringify(filters));
       try {
         const params = new URLSearchParams({
           type: 'rent', 
@@ -65,9 +70,12 @@ export const useApi = () => {
           featured: 'true',
           ...filters
         })
-        const response = await $api(`/properties?${params}`)
+        const apiUrl = `/properties?${params}`; console.log('[useApi] getPropertiesForRent - Fetching URL:', apiUrl);
+        const response = await $api(apiUrl)
+        console.log('[useApi] getPropertiesForRent - Raw Response:', JSON.stringify(response));
         return response
       } catch (error) {
+        console.error('[useApi] getPropertiesForRent - Caught Error:', JSON.stringify(error.message), JSON.stringify(error.data));
         console.error('❌ Error getting properties for rent:', error)
         return { success: false, data: [], error: error.message }
       }
