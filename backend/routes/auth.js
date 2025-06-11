@@ -144,46 +144,71 @@ router.post('/login', async (req, res) => {
 })
 
 // GET /api/auth/me - Get current user
-router.get('/me', async (req, res) => {
+router.get('/me', (req, res) => { // Temporarily non-async for extreme safety check
   try {
-    const token = req.headers.authorization?.split(' ')[1]
+    const token = req.headers.authorization?.split(' ')[1];
     
     if (!token) {
       return res.status(401).json({
         success: false,
         message: 'Không có token xác thực'
-      })
+      });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET)
-    const user = await User.findById(decoded.userId)
+    // Use a try-catch for jwt.verify as it can throw errors
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
 
-    if (!user) {
+      // User.findById might involve an await, so we'd need async here.
+      // For now, let's ensure the route definition itself is the focus.
+      // If this structure works, we can re-add async and User.findById.
+      // This simplification is to ensure the Express router parses this GET route correctly.
+      // The actual database call will require async.
+      // For now, to ensure the route itself is valid to Express:
+      User.findById(decoded.userId).then(user => {
+        if (!user) {
+          return res.status(401).json({
+            success: false,
+            message: 'Token không hợp lệ (user not found)'
+          });
+        }
+        res.json({
+          success: true,
+          data: {
+            user: {
+              id: user._id,
+              fullName: user.fullName,
+              email: user.email,
+              role: user.role
+            }
+          }
+        });
+      }).catch(userError => {
+        console.error('❌ User.findById error in /me:', userError);
+        return res.status(500).json({
+          success: false,
+          message: 'Lỗi khi tìm người dùng',
+          error: userError.message
+        });
+      });
+
+    } catch (jwtError) {
+      console.error('❌ JWT verification error in /me:', jwtError);
       return res.status(401).json({
         success: false,
-        message: 'Token không hợp lệ'
-      })
+        message: 'Token không hợp lệ (jwt verify failed)',
+        error: jwtError.message
+      });
     }
 
-    res.json({
-      success: true,
-      data: {
-        user: {
-          id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          role: user.role
-        }
-      }
-    })
-  } catch (error) {
-    console.error('❌ Auth verification error:', error)
-    res.status(401).json({
+  } catch (error) { // Outer try-catch for any synchronous errors earlier
+    console.error('❌ Auth verification error (outer) in /me:', error);
+    res.status(501).json({ // Use 501 to indicate it's not the intended final state
       success: false,
-      message: 'Token không hợp lệ',
+      message: 'Lỗi server khi xác thực (controller issue)',
       error: error.message
-    })
+    });
   }
-})
+});
 
 module.exports = router
