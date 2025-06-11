@@ -1,78 +1,36 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import User from '../models/User.cjs';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-export const auth = async (req, res, next) => {
-  if (!JWT_SECRET) {
-    console.error("FATAL ERROR: JWT_SECRET is not defined in auth middleware.");
-    return res.status(500).json({ success: false, message: "Server configuration error." });
-  }
+const auth = async (req, res, next) => {
   try {
-    let token;
-
-    // Get token from header
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
-    }
-
-    // Make sure token exists
+    const token = req.header('Authorization')?.replace('Bearer ', '') || req.header('x-auth-token');
+    
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Not authorized to access this route'
+        message: 'Không có token, truy cập bị từ chối'
       });
     }
 
-    try {
-      // Verify token
-      const decoded = jwt.verify(token, JWT_SECRET);
-      
-      // Get user from token
-      const user = await User.findById(decoded.id);
-      
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: 'User not found'
-        });
-      }
-
-      if (!user.isActive) {
-        return res.status(401).json({
-          success: false,
-          message: 'User account is deactivated'
-        });
-      }
-
-      req.user = user;
-      next();
-
-    } catch (error) {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    
+    const user = await User.findById(decoded.userId);
+    if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Token is not valid'
+        message: 'Token không hợp lệ'
       });
     }
 
+    req.user = decoded;
+    next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
-    res.status(500).json({
+    console.error('❌ Auth middleware error:', error);
+    res.status(401).json({
       success: false,
-      message: 'Server Error'
+      message: 'Token không hợp lệ'
     });
   }
 };
 
-// Role-based authorization
-export const authorize = (...roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: `User role '${req.user.role}' is not authorized to access this route`
-      });
-    }
-    next();
-  };
-};
+export default auth;

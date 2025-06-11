@@ -13,46 +13,11 @@ router.post('/register', authController.register)
 router.post('/login', authController.login)
 
 // GET /api/auth/me - Get current user
-router.get('/me', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1]
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Không có token xác thực'
-      })
-    }
+router.get('/me', auth, authController.getMe)
 
-    const decoded = jwt.verify(token, JWT_SECRET)
-    const user = await User.findById(decoded.userId)
+// PUT /api/auth/profile - Update user profile
+router.put('/profile', auth, authController.updateProfile)
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Token không hợp lệ'
-      })
-    }
-
-    res.json({
-      success: true,
-      data: {
-        user: {
-          id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          role: user.role
-        }
-      }
-    })
-  } catch (error) {
-    console.error('❌ Auth verification error:', error)
-    res.status(401).json({
-      success: false,
-      message: 'Token không hợp lệ',
-      error: error.message
-    })
-  }
-})
+console.log('✅ Auth routes configured')
 
 module.exports = router

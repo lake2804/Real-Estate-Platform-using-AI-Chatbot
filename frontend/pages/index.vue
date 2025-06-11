@@ -1,28 +1,37 @@
 <template>
-  <div>
-    <!-- Hero Section - Original Style -->
-    <section class="relative pt-8 pb-8 bg-white" style="min-height: 600px;">
-      <div class="container flex flex-col items-center justify-between px-8 mx-auto max-w-7xl md:flex-row">
-        <!-- Left: Content -->
-        <div class="w-full text-center md:w-1/2 md:text-left">
-          <h1 class="mb-4 text-4xl font-bold leading-tight text-stone-900 md:text-5xl lg:text-6xl xl:text-7xl font-inter">
-            BẤT ĐỘNG SẢN<br />
-            <span class="text-[#F62E56]">TIN CẬY</span>
-          </h1>
-          <p class="mt-2 text-base text-center md:text-lg font-inter text-stone-700 md:text-left">
-            Nâng tầm chất lượng cuộc sống
-          </p>
-        </div>
-        <!-- Stats (ẩn trên mobile) -->
-        <div class="items-center hidden gap-10 md:flex">
-          <div>
-            <div class="text-4xl font-medium text-stone-900 font-inter md:text-5xl">{{ totalStats.properties }}+</div>
-            <p class="text-base leading-tight font-inter text-stone-700">sản phẩm <br />bất động sản</p>
+  <div class="flex flex-col gap-8">
+    <!-- Hero Section -->
+    <section
+      class="flex flex-col items-center justify-center w-full pt-6 pb-2 bg-white"
+      style="min-height: 600px;"
+    >
+      <div
+        class="flex flex-col items-center justify-between w-full gap-12 px-4 mx-auto mt-20 md:flex-row max-w-7xl"
+      >
+        <!-- Left: Main Text -->
+        <div class="flex flex-col items-center w-full max-w-xl gap-8 md:items-start md:gap-14">
+          <div class="flex flex-col w-full gap-1">
+            <h1 class="text-3xl font-bold leading-tight text-center text-black md:text-left md:text-5xl font-inter">
+              NỀN TẢNG BẤT ĐỘNG SẢN
+              <span class="text-[#F62E56]">XÁC THỰC</span>
+              <span class="text-black"> & </span>
+              <span class="text-[#F62E56]">TIN CẬY</span>
+            </h1>
+            <p class="mt-2 text-base text-center md:text-lg font-inter text-stone-700 md:text-left">
+              Nâng tầm chất lượng cuộc sống
+            </p>
           </div>
-          <div class="w-px h-14 bg-stone-200"></div>
-          <div>
-            <div class="text-4xl font-medium text-stone-900 font-inter md:text-5xl">{{ totalStats.news }}+</div>
-            <p class="text-base leading-tight font-inter text-stone-700">tin tức <br />cập nhật</p>
+          <!-- Stats (ẩn trên mobile) -->
+          <div class="items-center hidden gap-10 md:flex">
+            <div>
+              <div class="text-4xl font-medium text-stone-900 font-inter md:text-5xl">{{ totalStats.properties }}+</div>
+              <p class="text-base leading-tight font-inter text-stone-700">sản phẩm <br />bất động sản</p>
+            </div>
+            <div class="w-px h-14 bg-stone-200"></div>
+            <div>
+              <div class="text-4xl font-medium text-stone-900 font-inter md:text-5xl">{{ totalStats.news }}+</div>
+              <p class="text-base leading-tight font-inter text-stone-700">tin tức <br />cập nhật</p>
+            </div>
           </div>
         </div>
         <!-- Right: Image -->
@@ -68,7 +77,7 @@
             v-for="(tab, index) in projectTabs"
             :key="index"
             @click="activeProjectTab = index"
-            :class="[
+            :class=" [
               'pb-3 font-medium transition-colors whitespace-nowrap font-inter',
               activeProjectTab === index
                 ? 'text-[#F62E56] border-b-2 border-[#F62E56]'
@@ -82,27 +91,27 @@
 
       <!-- Loading State -->
       <div v-if="isLoadingProjects" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div v-for="i in 8" :key="i" class="overflow-hidden bg-white rounded-lg shadow-sm animate-pulse">
+        <div v-for="n in 4" :key="n" class="overflow-hidden bg-white rounded-lg shadow-sm animate-pulse">
           <div class="h-48 bg-gray-300"></div>
           <div class="p-4">
-            <div class="h-4 mb-2 bg-gray-300 rounded"></div>
-            <div class="w-3/4 h-4 bg-gray-300 rounded"></div>
+            <div class="w-3/4 h-4 mb-2 bg-gray-300 rounded"></div>
+            <div class="w-1/2 h-4 bg-gray-300 rounded"></div>
           </div>
         </div>
       </div>
 
-      <!-- Projects Grid -->
-      <div v-else-if="filteredProjects.length > 0" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <!-- Project Grid -->
+      <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <FeaturedProjectCard
           v-for="project in filteredProjects"
-          :key="project.id || project._id"
+          :key="project._id || project.id"
           :project="project"
         />
       </div>
 
       <!-- No Projects Message -->
-      <div v-else class="py-12 text-center">
-        <div class="flex items-center justify-center w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full">
+      <div v-if="!isLoadingProjects && filteredProjects.length === 0" class="py-12 text-center">
+        <div class="flex flex-col items-center justify-center">
           <svg class="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m5 0v-4a1 1 0 011-1h2a1 1 0 011 1v4M7 7h10M7 11h4"/>
           </svg>
@@ -133,7 +142,7 @@
             v-for="(tab, index) in rentalTabs"
             :key="index"
             @click="activeRentalTab = index"
-            :class="[
+            :class=" [
               'pb-3 font-medium transition-colors whitespace-nowrap font-inter',
               activeRentalTab === index
                 ? 'text-[#F62E56] border-b-2 border-[#F62E56]'
@@ -147,16 +156,16 @@
 
       <!-- Loading State -->
       <div v-if="isLoadingRentals" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div v-for="i in 12" :key="i" class="overflow-hidden bg-white rounded-lg shadow-sm animate-pulse">
+        <div v-for="n in 4" :key="n" class="overflow-hidden bg-white rounded-lg shadow-sm animate-pulse">
           <div class="h-48 bg-gray-300"></div>
           <div class="p-4">
-            <div class="h-4 mb-2 bg-gray-300 rounded"></div>
-            <div class="w-3/4 h-4 bg-gray-300 rounded"></div>
+            <div class="w-3/4 h-4 mb-2 bg-gray-300 rounded"></div>
+            <div class="w-1/2 h-4 bg-gray-300 rounded"></div>
           </div>
         </div>
       </div>
 
-      <!-- Rentals Grid -->
+      <!-- Rental Grid -->
       <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <PropertyCard
           v-for="rental in filteredRentals"
@@ -196,7 +205,7 @@
             v-for="(tab, index) in saleTabs"
             :key="index"
             @click="activeSaleTab = index"
-            :class="[
+            :class=" [
               'pb-3 font-medium transition-colors whitespace-nowrap font-inter',
               activeSaleTab === index
                 ? 'text-[#F62E56] border-b-2 border-[#F62E56]'
@@ -210,16 +219,16 @@
 
       <!-- Loading State -->
       <div v-if="isLoadingSales" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div v-for="i in 12" :key="i" class="overflow-hidden bg-white rounded-lg shadow-sm animate-pulse">
+        <div v-for="n in 4" :key="n" class="overflow-hidden bg-white rounded-lg shadow-sm animate-pulse">
           <div class="h-48 bg-gray-300"></div>
           <div class="p-4">
-            <div class="h-4 mb-2 bg-gray-300 rounded"></div>
-            <div class="w-3/4 h-4 bg-gray-300 rounded"></div>
+            <div class="w-3/4 h-4 mb-2 bg-gray-300 rounded"></div>
+            <div class="w-1/2 h-4 bg-gray-300 rounded"></div>
           </div>
         </div>
       </div>
 
-      <!-- Sales Grid -->
+      <!-- Sale Grid -->
       <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <PropertyCard
           v-for="sale in filteredSales"
@@ -248,18 +257,18 @@
       </div>
     </div>
 
-    <!-- News Section - Original Style -->
+    <!-- News Section -->
     <div class="container px-8 py-4 mx-auto max-w-7xl">
       <h2 class="mb-6 text-[32px] font-bold text-gray-900 font-inter">Tin tức bất động sản</h2>
 
-      <!-- News Tabs -->
+      <!-- Tabs -->
       <div class="flex pb-2 mb-6 overflow-x-auto hide-scrollbar">
         <div class="flex w-full space-x-12 border-b border-stone-200">
           <button
             v-for="(tab, index) in newsTabs"
             :key="index"
             @click="activeNewsTab = index"
-            :class="[
+            :class=" [
               'pb-3 font-medium transition-colors whitespace-nowrap font-inter',
               activeNewsTab === index
                 ? 'text-[#F62E56] border-b-2 border-[#F62E56]'
@@ -271,9 +280,9 @@
         </div>
       </div>
 
-      <!-- News Loading State -->
-      <div v-if="newsLoading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <div v-for="i in 6" :key="i" class="overflow-hidden bg-white rounded-lg shadow-sm animate-pulse">
+      <!-- Loading State -->
+      <div v-if="isLoadingNews" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div v-for="n in 3" :key="n" class="overflow-hidden bg-white rounded-lg shadow-sm animate-pulse">
           <div class="h-48 bg-gray-300"></div>
           <div class="p-4">
             <div class="w-3/4 h-4 mb-2 bg-gray-300 rounded"></div>
@@ -282,53 +291,41 @@
         </div>
       </div>
 
-      <!-- News Error State -->
-      <div v-else-if="newsError" class="py-8 text-center">
-        <p class="text-red-600">{{ newsError }}</p>
-        <button @click="refreshNews" class="px-4 py-2 mt-4 text-white bg-blue-600 rounded hover:bg-blue-700">
-          Thử lại
-        </button>
-      </div>
-
       <!-- News Grid -->
-      <div v-else-if="news && news.length > 0" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <article 
-          v-for="article in filteredNews" 
-          :key="article._id"
-          class="overflow-hidden transition-shadow bg-white rounded-lg shadow-sm hover:shadow-md"
+      <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <article
+          v-for="article in filteredNews"
+          :key="article._id || article.id"
+          class="overflow-hidden transition-shadow bg-white rounded-lg shadow-sm hover:shadow-lg"
         >
-          <!-- ✅ FIXED: Correct news link without /api prefix -->
-          <NuxtLink :to="`/news/${article._id || article.id}`">
-            <!-- Image -->
-            <div class="relative h-48 overflow-hidden">
-              <img 
-                :src="article.image || article.thumbnail || 'https://picsum.photos/600/400'" 
-                :alt="article.title"
-                class="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
-                @error="handleImageError"
-              >
-              <!-- Category Badge -->
-              <div class="absolute px-2 py-1 text-xs font-medium text-white bg-red-500 rounded top-3 left-3">
-                {{ article.category || 'Tin tức' }}
+          <NuxtLink :to="`/news/${article._id || article.id}`" class="block">
+            <img
+              :src="article.image || article.thumbnail || '/images/news-default.jpg'"
+              :alt="article.title"
+              class="object-cover w-full h-48"
+            />
+            <div class="p-6">
+              <div class="flex items-center mb-3">
+                <span class="px-3 py-1 text-xs font-medium text-red-600 bg-red-100 rounded-full">
+                  {{ article.category }}
+                </span>
+                <span class="ml-auto text-sm text-gray-500">
+                  {{ formatDate(article.publishedAt || article.createdAt) }}
+                </span>
               </div>
-            </div>
-            
-            <!-- Content -->
-            <div class="p-4">
-              <!-- Title -->
               <h3 class="mb-2 text-lg font-semibold text-gray-900 line-clamp-2 font-inter">
                 {{ article.title }}
               </h3>
-              
-              <!-- Excerpt -->
-              <p class="mb-3 text-sm text-gray-600 line-clamp-3">
-                {{ article.excerpt || article.description || 'Đọc để biết thêm thông tin...' }}
+              <p class="text-sm text-gray-600 line-clamp-2">
+                {{ article.excerpt || article.description || truncateText(article.content, 100) }}
               </p>
-              
-              <!-- Meta Info -->
-              <div class="flex items-center justify-between text-xs text-gray-500">
-                <span>{{ formatDate(article.publishedAt || article.createdAt) }}</span>
-                <span>{{ article.readTime || 5 }} phút đọc</span>
+              <div class="flex items-center justify-between mt-4">
+                <span class="text-xs text-gray-500">
+                  {{ article.readTime || 5 }} phút đọc
+                </span>
+                <span class="text-xs text-gray-500">
+                  {{ formatNumber(article.views || 0) }} lượt xem
+                </span>
               </div>
             </div>
           </NuxtLink>
@@ -336,15 +333,15 @@
       </div>
 
       <!-- No News Message -->
-      <div v-else class="py-12 text-center">
+      <div v-if="!isLoadingNews && filteredNews.length === 0" class="py-12 text-center">
         <h3 class="mb-2 text-lg font-medium text-gray-600">
-          Chưa có tin tức nào
+          Không có tin tức {{ newsTabs[activeNewsTab] }}
         </h3>
-        <p class="text-gray-500">Hãy quay lại sau để xem tin tức mới nhất.</p>
+        <p class="text-gray-500">Thử chọn danh mục khác hoặc xem tất cả tin tức.</p>
       </div>
 
       <!-- View More Button -->
-      <div v-if="news && news.length > 0" class="flex justify-center mt-8">
+      <div class="flex justify-center mt-8">
         <NuxtLink
           to="/news"
           class="px-6 py-2 text-sm font-medium text-white transition-colors bg-red-500 rounded hover:bg-red-600 font-inter"

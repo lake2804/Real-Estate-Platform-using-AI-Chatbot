@@ -1,392 +1,206 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-// import User from '../models/User.cjs';
+﻿const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User.cjs');
+
+console.log('🔧 Loading auth controller (CommonJS)...');
 
 // Generate JWT token
 const generateToken = (userId) => {
-  const JWT_SECRET = process.env.JWT_SECRET;
-  if (!JWT_SECRET) {
-    console.error("FATAL ERROR: JWT_SECRET is not defined in controller.");
-    // This will likely cause jwt.sign to throw an error if secret is undefined.
-    // Consider how the application should behave in this scenario.
-    // For now, proceeding will let jwt.sign handle the undefined secret.
-  }
+  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
   return jwt.sign(
-    { id: userId },
-    JWT_SECRET, // Use the fetched constant
+    { userId: userId, id: userId },
+    JWT_SECRET,
     { expiresIn: '7d' }
   );
 };
 
 // Register new user
-export const register = async (req, res) => {
+const register = async (req, res) => {
   try {
-    // const { fullName, email, password, phone, role = 'user' } = req.body;
+    console.log(' Register endpoint called');
+    const { fullName, email, password, phone } = req.body;
 
-    // // Validation
-    // if (!fullName || !email || !password) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'Please provide all required fields: fullName, email, password'
-    //   });
-    // }
+    if (!fullName || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng nhập đầy đủ thông tin'
+      });
+    }
 
-    // // Email validation
-    // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    // if (!emailRegex.test(email)) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'Please provide a valid email address'
-    //   });
-    // }
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email đã được sử dụng'
+      });
+    }
 
-    // // Password validation
-    // if (password.length < 6) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'Password must be at least 6 characters long'
-    //   });
-    // }
+    const user = new User({
+      fullName,
+      email: email.toLowerCase(),
+      password,
+      phone
+    });
 
-    // // Check if user already exists
-    // const existingUser = await User.findOne({ email: email.toLowerCase() });
-    // if (existingUser) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'User with this email already exists'
-    //   });
-    // }
+    await user.save();
 
-    // // Hash password
-    // const salt = await bcrypt.genSalt(12);
-    // const hashedPassword = await bcrypt.hash(password, salt);
+    const token = generateToken(user._id);
 
-    // // Create user
-    // const user = new User({
-    //   fullName: fullName.trim(),
-    //   email: email.toLowerCase().trim(),
-    //   password: hashedPassword,
-    //   phone: phone?.trim(),
-    //   role,
-    //   isActive: true
-    // });
-
-    // await user.save();
-
-    // // Generate token
-    // const token = generateToken(user._id);
-
-    // // Remove password from response
-    // const userResponse = {
-    //   id: user._id,
-    //   fullName: user.fullName,
-    //   email: user.email,
-    //   phone: user.phone,
-    //   role: user.role,
-    //   avatar: user.avatar,
-    //   isActive: user.isActive,
-    //   createdAt: user.createdAt
-    // };
-
-    // console.log('✅ User registered successfully:', user.email);
-
-    // res.status(201).json({
-    //   success: true,
-    //   message: 'User registered successfully',
-    //   data: {
-    //     user: userResponse,
-    //     token
-    //   }
-    // });
-    res.status(501).json({ success: false, message: 'User registration temporarily disabled for diagnostics' });
-
+    res.status(201).json({
+      success: true,
+      message: 'Đăng ký thành công',
+      data: {
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role
+        },
+        token
+      }
+    });
   } catch (error) {
-    console.error('❌ Registration error (controller - user logic commented out):', error);
+    console.error(' Registration error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error during registration (controller - user logic commented out)',
+      message: 'Lỗi server khi đăng ký'
     });
   }
 };
 
 // Login user
-export const login = async (req, res) => {
+const login = async (req, res) => {
   try {
-    // const { email, password } = req.body;
+    console.log(' Login endpoint called');
+    const { email, password } = req.body;
 
-    // // Validation
-    // if (!email || !password) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'Please provide email and password'
-    //   });
-    // }
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng nhập email và mật khẩu'
+      });
+    }
 
-    // // Find user
-    // const user = await User.findOne({
-    //   email: email.toLowerCase().trim(),
-    //   isActive: true
-    // });
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email hoặc mật khẩu không đúng'
+      });
+    }
 
-    // if (!user) {
-    //   return res.status(401).json({
-    //     success: false,
-    //     message: 'Invalid email or password'
-    //   });
-    // }
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email hoặc mật khẩu không đúng'
+      });
+    }
 
-    // // Check password
-    // const isPasswordValid = await bcrypt.compare(password, user.password);
-    // if (!isPasswordValid) {
-    //   return res.status(401).json({
-    //     success: false,
-    //     message: 'Invalid email or password'
-    //   });
-    // }
+    const token = generateToken(user._id);
 
-    // // Update last login
-    // user.lastLogin = new Date();
-    // await user.save();
-
-    // // Generate token
-    // const token = generateToken(user._id);
-
-    // // Remove password from response
-    // const userResponse = {
-    //   id: user._id,
-    //   fullName: user.fullName,
-    //   email: user.email,
-    //   phone: user.phone,
-    //   role: user.role,
-    //   avatar: user.avatar,
-    //   isActive: user.isActive,
-    //   lastLogin: user.lastLogin,
-    //   createdAt: user.createdAt
-    // };
-
-    // console.log('✅ User logged in successfully:', user.email);
-
-    // res.json({
-    //   success: true,
-    //   message: 'Login successful',
-    //   data: {
-    //     user: userResponse,
-    //     token
-    //   }
-    // });
-    res.status(501).json({ success: false, message: 'User login temporarily disabled for diagnostics' });
-
+    res.json({
+      success: true,
+      message: 'Đăng nhập thành công',
+      data: {
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role
+        },
+        token
+      }
+    });
   } catch (error) {
-    console.error('❌ Login error (controller - user logic commented out):', error);
+    console.error(' Login error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error during login (controller - user logic commented out)',
+      message: 'Lỗi server khi đăng nhập'
     });
   }
 };
 
-// Get user profile
-export const getProfile = async (req, res) => {
+// Get user profile (renamed from getProfile to getMe for route compatibility)
+const getMe = async (req, res) => {
   try {
-    // const user = await User.findById(req.user.id).select('-password');
+    console.log(' GetMe endpoint called');
+    const user = await User.findById(req.user.userId || req.user.id).select('-password');
     
-    // if (!user) {
-    //   return res.status(404).json({
-    //     success: false,
-    //     message: 'User not found'
-    //   });
-    // }
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng'
+      });
+    }
 
-    // const userResponse = {
-    //   id: user._id,
-    //   fullName: user.fullName,
-    //   email: user.email,
-    //   phone: user.phone,
-    //   role: user.role,
-    //   avatar: user.avatar,
-    //   isActive: user.isActive,
-    //   lastLogin: user.lastLogin,
-    //   createdAt: user.createdAt
-    // };
-
-    // res.json({
-    //   success: true,
-    //   data: userResponse
-    // });
-    res.status(501).json({ success: false, message: 'Get profile temporarily disabled for diagnostics' });
-
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone,
+          role: user.role
+        }
+      }
+    });
   } catch (error) {
-    console.error('❌ Get profile error (controller - user logic commented out):', error);
+    console.error(' Get profile error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error getting profile (controller - user logic commented out)',
+      message: 'Lỗi server'
     });
   }
 };
 
 // Update user profile
-export const updateProfile = async (req, res) => {
+const updateProfile = async (req, res) => {
   try {
-    // const { fullName, phone, avatar } = req.body;
+    console.log(' UpdateProfile endpoint called');
+    const { fullName, phone } = req.body;
     
-    // const user = await User.findById(req.user.id);
-    
-    // if (!user) {
-    //   return res.status(404).json({
-    //     success: false,
-    //     message: 'User not found'
-    //   });
-    // }
+    const user = await User.findById(req.user.userId || req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng'
+      });
+    }
 
-    // // Update fields if provided
-    // if (fullName) user.fullName = fullName.trim();
-    // if (phone) user.phone = phone.trim();
-    // if (avatar) user.avatar = avatar;
+    if (fullName) user.fullName = fullName;
+    if (phone) user.phone = phone;
 
-    // await user.save();
+    await user.save();
 
-    // const userResponse = {
-    //   id: user._id,
-    //   fullName: user.fullName,
-    //   email: user.email,
-    //   phone: user.phone,
-    //   role: user.role,
-    //   avatar: user.avatar,
-    //   isActive: user.isActive,
-    //   lastLogin: user.lastLogin,
-    //   createdAt: user.createdAt
-    // };
-
-    // console.log('✅ Profile updated successfully:', user.email);
-
-    // res.json({
-    //   success: true,
-    //   message: 'Profile updated successfully',
-    //   data: userResponse
-    // });
-    res.status(501).json({ success: false, message: 'Update profile temporarily disabled for diagnostics' });
-
-  } catch (error) {
-    console.error('❌ Update profile error (controller - user logic commented out):', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error updating profile (controller - user logic commented out)',
-    });
-  }
-};
-
-// Change password
-export const changePassword = async (req, res) => {
-  try {
-    // const { currentPassword, newPassword } = req.body;
-
-    // // Validation
-    // if (!currentPassword || !newPassword) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'Please provide current password and new password'
-    //   });
-    // }
-
-    // if (newPassword.length < 6) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'New password must be at least 6 characters long'
-    //   });
-    // }
-
-    // // Find user with password
-    // const user = await User.findById(req.user.id);
-    
-    // if (!user) {
-    //   return res.status(404).json({
-    //     success: false,
-    //     message: 'User not found'
-    //   });
-    // }
-
-    // // Check current password
-    // const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
-    // if (!isCurrentPasswordValid) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'Current password is incorrect'
-    //   });
-    // }
-
-    // // Hash new password
-    // const salt = await bcrypt.genSalt(12);
-    // const hashedNewPassword = await bcrypt.hash(newPassword, salt);
-
-    // // Update password
-    // user.password = hashedNewPassword;
-    // await user.save();
-
-    // console.log('✅ Password changed successfully:', user.email);
-
-    // res.json({
-    //   success: true,
-    //   message: 'Password changed successfully'
-    // });
-    res.status(501).json({ success: false, message: 'Change password temporarily disabled for diagnostics' });
-
-  } catch (error) {
-    console.error('❌ Change password error (controller - user logic commented out):', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error changing password (controller - user logic commented out)',
-    });
-  }
-};
-
-// Verify token (for frontend token validation)
-export const verifyToken = async (req, res) => {
-  try {
-    // // If we reach here, token is valid (auth middleware passed)
-    // const userResponse = {
-    //   id: req.user._id,
-    //   fullName: req.user.fullName,
-    //   email: req.user.email,
-    //   phone: req.user.phone,
-    //   role: req.user.role,
-    //   avatar: req.user.avatar,
-    //   isActive: req.user.isActive,
-    //   lastLogin: req.user.lastLogin,
-    //   createdAt: req.user.createdAt
-    // };
-
-    // res.json({
-    //   success: true,
-    //   message: 'Token is valid',
-    //   data: userResponse
-    // });
-    res.status(501).json({ success: false, message: 'Token verification temporarily disabled for diagnostics (controller)' });
-
-
-  } catch (error) {
-    console.error('❌ Verify token error (controller - user logic commented out):', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error verifying token'
-    });
-  }
-};
-
-// Logout (optional - mainly for logging)
-export const logout = async (req, res) => {
-  try {
-    console.log('✅ User logged out:', req.user.email);
-    
     res.json({
       success: true,
-      message: 'Logged out successfully'
+      message: 'Cập nhật thành công',
+      data: {
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone,
+          role: user.role
+        }
+      }
     });
-
   } catch (error) {
-    console.error('❌ Logout error:', error);
+    console.error(' UpdateProfile error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error during logout'
+      message: 'Lỗi server'
     });
   }
+};
+
+console.log(' Auth controller functions defined (CommonJS)');
+
+module.exports = {
+  register,
+  login,
+  getMe,
+  updateProfile
 };
