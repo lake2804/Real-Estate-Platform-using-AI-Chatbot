@@ -239,24 +239,27 @@ const loadProjects = async () => {
     pending.value = true
     error.value = null
     
-    console.log('🔄 Loading featured projects...')
+    console.log('[projects/index.vue] loadProjects - Current Filters:', JSON.stringify(filters.value));
+    console.log('[projects/index.vue] loadProjects - Calling getFeaturedProjects with filters:', JSON.stringify(filters.value));
+    console.log('🔄 Loading featured projects...') // Existing log, can be kept or removed
     
-    const response = await getFeaturedProjects(100, filters.value)
+    const response = await getFeaturedProjects(100, filters.value) // Assuming itemsPerPage is 100 for "all"
+    console.log('[projects/index.vue] loadProjects - Raw API Response:', JSON.stringify(response));
     
-    console.log('📦 Projects API Response:', response)
+    console.log('📦 Projects API Response:', response) // Existing log
     
     if (response.success && response.data) {
       const transformedProjects = response.data
         .map(transformProject)
         .filter(Boolean)
-      
-      projects.value = transformedProjects
+      projects.value = transformedProjects;
+      console.log('[projects/index.vue] loadProjects - Transformed Projects (sample):', JSON.stringify(projects.value.slice(0, 2)));
     } else if (response.data) {
       const transformedProjects = response.data
         .map(transformProject)
         .filter(Boolean)
-      
-      projects.value = transformedProjects
+      projects.value = transformedProjects;
+      console.log('[projects/index.vue] loadProjects - Transformed Projects (sample):', JSON.stringify(projects.value.slice(0, 2)));
     } else {
       projects.value = []
     }
@@ -264,7 +267,9 @@ const loadProjects = async () => {
     console.log(`✅ Loaded ${projects.value.length} valid projects`)
     
   } catch (err) {
-    console.error('❌ Error loading projects:', err)
+    console.error('[projects/index.vue] loadProjects - Caught Error:', JSON.stringify(err.message));
+    console.log('[projects/index.vue] loadProjects - Error ref value:', JSON.stringify(error.value));
+    console.error('❌ Error loading projects:', err) // Existing log
     error.value = err.message || 'Lỗi khi tải dự án'
     projects.value = []
   } finally {

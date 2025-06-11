@@ -20,6 +20,21 @@ export const useApi = () => {
         options.headers.Authorization = `Bearer ${token.value}`
       }
     },
+    onResponse({ request, response, options }) {
+      // Log successful responses
+      console.log('[useApi] Successful Response for:', request, 'Status:', response.status);
+      // To avoid overly verbose logs for large data, you might log selectively:
+      if (response._data && typeof response._data === 'object') {
+        const dataSummary = { ...response._data };
+        if (Array.isArray(dataSummary.data) && dataSummary.data.length > 5) {
+          dataSummary.data = `Array of ${dataSummary.data.length} items (first 5 shown)`;
+          dataSummary.originalData = response._data.data.slice(0,5); // keep a sample
+        }
+        console.log('[useApi] Response Data Summary:', JSON.stringify(dataSummary, null, 2));
+      } else {
+        console.log('[useApi] Response Data:', response._data);
+      }
+    },
     onResponseError({ response, request }) {
       const cleanUrl = request.toString().startsWith('/') ? request : `/${request}`
       const fullUrl = `${apiBase}${cleanUrl}`

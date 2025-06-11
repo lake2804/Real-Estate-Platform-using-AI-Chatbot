@@ -197,19 +197,25 @@ const loadRentProperties = async () => {
       sort: sort.value,
       ...route.query
     }
+    console.log('[rent/index.vue] loadRentProperties - Current Filters:', JSON.stringify(filters));
 
     console.log('🔄 Loading RENT properties with filters:', filters)
 
     const response = await getPropertiesForRent(limit, filters) // ✅ FOR RENT
+    console.log('[rent/index.vue] loadRentProperties - Raw API Response:', JSON.stringify(response));
     
     console.log('📦 RENT API Response:', response)
 
     if (response.success && response.data) {
       saleProperties.value = response.data.map(transformRentProperty)
+      console.log('[rent/index.vue] loadRentProperties - Transformed Properties (sample):', JSON.stringify(saleProperties.value.slice(0, 2)));
       total.value = response.pagination?.total || response.total || response.data.length
+      console.log('[rent/index.vue] loadRentProperties - Total Results:', total.value);
     } else if (response.data) {
       saleProperties.value = response.data.map(transformRentProperty)
+      console.log('[rent/index.vue] loadRentProperties - Transformed Properties (sample):', JSON.stringify(saleProperties.value.slice(0, 2)));
       total.value = response.data.length
+      console.log('[rent/index.vue] loadRentProperties - Total Results:', total.value);
     } else {
       throw new Error('No data received from API')
     }
@@ -218,6 +224,8 @@ const loadRentProperties = async () => {
     console.log('🏠 RENT Properties data:', saleProperties.value)
     
   } catch (err) {
+    console.error('[rent/index.vue] loadRentProperties - Caught Error:', JSON.stringify(err.message));
+    console.log('[rent/index.vue] loadRentProperties - Error ref value:', JSON.stringify(errorMsg.value));
     console.error('❌ Error fetching RENT properties:', err)
     errorMsg.value = err.message || 'Lỗi khi tải dữ liệu'
     saleProperties.value = []

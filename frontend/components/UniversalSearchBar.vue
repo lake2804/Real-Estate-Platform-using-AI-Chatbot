@@ -233,20 +233,20 @@
               Mức giá
             </div>
             <div
-              v-for="price in priceOptions"
-              :key="price"
-              @click="selectDropdownOption('price', price)"
+              v-for="option in priceOptionsDetails"
+              :key="option.value"
+              @click="selectDropdownOption('price', option.label)"
               class="flex items-center px-3 py-3 transition-colors cursor-pointer hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 group"
               :class="{
-                'bg-gradient-to-r from-red-50 to-pink-50 text-[#F62E56] font-semibold': searchValues.price === price,
-                'text-gray-700': searchValues.price !== price
+                'bg-gradient-to-r from-red-50 to-pink-50 text-[#F62E56] font-semibold': searchValues.price === option.label,
+                'text-gray-700': searchValues.price !== option.label
               }"
             >
               <div 
                 class="w-2 h-2 mr-3 transition-colors rounded-full"
-                :class="searchValues.price === price ? 'bg-[#F62E56]' : 'bg-gray-300 group-hover:bg-red-300'"
+                :class="searchValues.price === option.label ? 'bg-[#F62E56]' : 'bg-gray-300 group-hover:bg-red-300'"
               ></div>
-              <span class="text-sm font-inter">{{ price }}</span>
+              <span class="text-sm font-inter">{{ option.label }}</span>
             </div>
           </div>
         </div>
@@ -374,11 +374,25 @@ const popularSearches = ref([])
 const locationOptions = ref([])
 
 // Search options
-const priceOptions = computed(() => {
-  return searchValues.value.type === 'Mua nhà' 
-    ? ["Giá", "Dưới 1 tỷ", "1-2 tỷ", "2-5 tỷ", "5-10 tỷ", "Trên 10 tỷ"]
-    : ["Giá", "Dưới 5 triệu", "5-10 triệu", "10-20 triệu", "20-30 triệu", "Trên 30 triệu"]
-})
+const priceOptionsDetails = computed(() => {
+  const salePrices = [
+    { label: "Giá", value: "all", min: null, max: null },
+    { label: "Dưới 1 tỷ", value: "under-1", min: 0, max: 1000000000 },
+    { label: "1-2 tỷ", value: "1-2", min: 1000000000, max: 2000000000 },
+    { label: "2-5 tỷ", value: "2-5", min: 2000000000, max: 5000000000 },
+    { label: "5-10 tỷ", value: "5-10", min: 5000000000, max: 10000000000 },
+    { label: "Trên 10 tỷ", value: "above-10", min: 10000000000, max: null }
+  ];
+  const rentPrices = [
+    { label: "Giá", value: "all", min: null, max: null },
+    { label: "Dưới 5 triệu", value: "under-5m", min: 0, max: 5000000 },
+    { label: "5-10 triệu", value: "5m-10m", min: 5000000, max: 10000000 },
+    { label: "10-20 triệu", value: "10m-20m", min: 10000000, max: 20000000 },
+    { label: "20-30 triệu", value: "20m-30m", min: 20000000, max: 30000000 },
+    { label: "Trên 30 triệu", value: "above-30m", min: 30000000, max: null }
+  ];
+  return searchValues.value.type === 'Mua nhà' ? salePrices : rentPrices;
+});
 
 const roomOptions = ref(["Số phòng", "1 phòng", "2 phòng", "3 phòng", "4+ phòng"])
 
@@ -537,8 +551,28 @@ const handleSearch = () => {
   const query = {
     search: searchValues.value.keyword || undefined,
     location: searchValues.value.location !== 'Vị trí' ? searchValues.value.location : undefined,
-    priceRange: searchValues.value.price !== 'Giá' ? searchValues.value.price : undefined,
-    bedrooms: searchValues.value.rooms !== 'Số phòng' ? searchValues.value.rooms : undefined
+  };
+
+  const roomsValue = searchValues.value.rooms;
+  if (roomsValue !== 'Số phòng') {
+    if (roomsValue.includes('+')) {
+      query.bedrooms = parseInt(roomsValue) + '+'; // e.g., "4+"
+    } else {
+      query.bedrooms = parseInt(roomsValue); // e.g., 3
+    }
+  }
+
+  const selectedPriceLabel = searchValues.value.price;
+  if (selectedPriceLabel !== 'Giá') {
+    const priceDetail = priceOptionsDetails.value.find(p => p.label === selectedPriceLabel);
+    if (priceDetail) {
+      if (priceDetail.min !== null) {
+        query.priceMin = priceDetail.min;
+      }
+      if (priceDetail.max !== null) {
+        query.priceMax = priceDetail.max;
+      }
+    }
   }
   
   // Filter out empty values
@@ -575,10 +609,51 @@ const handleClickOutside = (event) => {
 // Initialize from URL query
 const initFromQuery = () => {
   if (route.query) {
-    if (route.query.search) searchValues.value.keyword = route.query.search
-    if (route.query.location) searchValues.value.location = route.query.location
-    if (route.query.priceRange) searchValues.value.price = route.query.priceRange
-    if (route.query.bedrooms) searchValues.value.rooms = route.query.bedrooms
+    if (route.query.search) searchValues.value.keyword = route.query.search;
+    if (route.query.location) searchValues.value.location = route.query.location;
+
+    // Logic to re-select price label based on priceMin/priceMax from URL
+    if (route.query.priceMin || route.query.priceMax) {
+        const priceMinFromQuery = route.query.priceMin ? parseInt(route.query.priceMin) : null;
+        const priceMaxFromQuery = route.query.priceMax ? parseInt(route.query.priceMax) : null;
+
+        const matchedPriceOption = priceOptionsDetails.value.find(opt => {
+            // Handle "all" case or default if no specific range matches
+            if (opt.value === "all" && priceMinFromQuery === null && priceMaxFromQuery === null && opt.label === "Giá") return true;
+            return opt.min === priceMinFromQuery && opt.max === priceMaxFromQuery;
+        });
+
+        if (matchedPriceOption) {
+            searchValues.value.price = matchedPriceOption.label;
+        } else {
+             // Fallback or find closest match if needed - for now, default to "Giá"
+            searchValues.value.price = "Giá";
+        }
+    } else {
+        searchValues.value.price = "Giá"; // Default if no price params in URL
+    }
+
+    if (route.query.bedrooms) {
+      const bedQuery = route.query.bedrooms.toString();
+      // Attempt to match with existing roomOptions like "1 phòng", "4+ phòng"
+      const roomOptionMatch = roomOptions.value.find(rOpt => {
+        const numPart = parseInt(rOpt); // "1" from "1 phòng", "4" from "4+ phòng"
+        if (bedQuery.endsWith('+')) { // Query is "4+"
+          return rOpt.includes('+') && numPart === parseInt(bedQuery);
+        } else { // Query is "1", "2", "3"
+          return !rOpt.includes('+') && numPart === parseInt(bedQuery);
+        }
+      });
+
+      if (roomOptionMatch) {
+        searchValues.value.rooms = roomOptionMatch;
+      } else {
+        // If no direct match (e.g. query has "3" but options are "3 phòng"), default or construct
+        searchValues.value.rooms = "Số phòng"; // Default if no suitable option found
+      }
+    } else {
+      searchValues.value.rooms = "Số phòng"; // Default if no bedrooms param
+    }
   }
 }
 

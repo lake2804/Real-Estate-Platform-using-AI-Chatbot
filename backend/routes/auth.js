@@ -31,13 +31,17 @@ router.post('/register', async (req, res) => {
       })
     }
 
+    // Hash password
+    const salt = await bcrypt.genSalt(12); // Using salt factor 12
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     // Create user
     const user = new User({
       fullName,
       email,
-      password,
+      password: hashedPassword, // Use hashed password
       phone
-    })
+    });
 
     await user.save()
 
