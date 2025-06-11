@@ -153,16 +153,20 @@ const loadNews = async () => {
     pending.value = true
     error.value = null
 
-    console.log('🔄 Loading news...')
+    console.log('[news/index.vue] loadNews - Starting load...');
+    console.log('🔄 Loading news...') // Existing log
 
     // Load all news
     const newsResponse = await getNews(100)
+    console.log('[news/index.vue] loadNews - Raw API Response (all news):', JSON.stringify(newsResponse));
     if (newsResponse.success && newsResponse.data) {
       news.value = newsResponse.data.map(transformNews)
+      console.log('[news/index.vue] loadNews - Transformed News (sample):', JSON.stringify(news.value.slice(0, 2)));
     }
 
     // Load featured news  
     const featuredResponse = await getFeaturedNews(5)
+    // Optional: log featuredResponse if needed, but subtask focuses on all news
     if (featuredResponse.success && featuredResponse.data) {
       featuredNews.value = featuredResponse.data.map(transformNews)
     }
@@ -170,7 +174,9 @@ const loadNews = async () => {
     console.log(`✅ Loaded ${news.value.length} news articles, ${featuredNews.value.length} featured`)
     
   } catch (err) {
-    console.error('❌ Error fetching news:', err)
+    console.error('[news/index.vue] loadNews - Caught Error:', JSON.stringify(err.message));
+    console.log('[news/index.vue] loadNews - Error ref value:', JSON.stringify(error.value));
+    console.error('❌ Error fetching news:', err) // Existing log
     error.value = err.message || 'Lỗi khi tải tin tức'
     news.value = []
     featuredNews.value = []

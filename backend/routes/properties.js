@@ -7,8 +7,6 @@ const Property = require('../models/Property.cjs')
 // GET /api/properties - Get properties with filters
 router.get('/', async (req, res) => {
   try {
-    const query = { isActive: true }
-    
     let {
       page = 1,
       limit = 12,
@@ -18,39 +16,83 @@ router.get('/', async (req, res) => {
       priceMax,
       sort = 'createdAt',
       order = 'desc',
-      featured
+      featured,
+      search, // New
+      bedrooms // New
     } = req.query
     
-    console.log(`🏠 Getting properties (type: ${type}, limit: ${limit}, featured: ${featured})`)
+    console.log(`🏠 Getting properties (type: ${type}, limit: ${limit}, featured: ${featured}, search: ${search}, bedrooms: ${bedrooms})`)
+
+    // Initialize query with isActive: true using $and
+    const queryConditions = [{ isActive: true }];
     
     // Type filter
     if (type) {
-      query.type = type
+      queryConditions.push({ type: type });
     }
     
-    // Apply filters
+    // Location filter
     if (location && location !== 'Tất cả') {
-      query.$or = [
-        { 'location.district': { $regex: location, $options: 'i' } },
-        { 'location.city': { $regex: location, $options: 'i' } }
-      ]
+      queryConditions.push({
+        $or: [
+          { 'location.district': { $regex: location, $options: 'i' } },
+          { 'location.city': { $regex: location, $options: 'i' } }
+        ]
+      });
     }
     
+    // Price filter
     if (priceMin || priceMax) {
-      query.price = {}
-      if (priceMin) query.price.$gte = parseInt(priceMin)
-      if (priceMax) query.price.$lte = parseInt(priceMax)
+      const priceQuery = {};
+      if (priceMin) priceQuery.$gte = parseInt(priceMin);
+      if (priceMax) priceQuery.$lte = parseInt(priceMax);
+      queryConditions.push({ price: priceQuery });
     }
     
     // Featured filter
     if (featured === 'true') {
-      query.$and = query.$and || []
-      query.$and.push({
+      queryConditions.push({
         $or: [
           { isFeatured: true },
           { featured: true }
         ]
-      })
+      });
+    }
+
+    // General keyword search
+    if (search) {
+      const searchRegex = { $regex: search, $options: 'i' };
+      queryConditions.push({
+        $or: [
+          { title: searchRegex },
+          { description: searchRegex },
+          { 'location.address': searchRegex },
+          { 'location.district': searchRegex }, // Also search district
+          { 'location.city': searchRegex } // Also search city
+        ]
+      });
+    }
+
+    // Bedrooms filter
+    if (bedrooms) {
+      const numBedrooms = parseInt(bedrooms);
+      if (!isNaN(numBedrooms)) {
+        // For "4+", it means 4 or more. For "3", it means exactly 3.
+        if (bedrooms.endsWith('+')) {
+          queryConditions.push({ 'details.bedrooms': { $gte: numBedrooms } });
+        } else {
+          queryConditions.push({ 'details.bedrooms': numBedrooms });
+        }
+      }
+    }
+
+    // Construct the final query object
+    let finalQuery = {};
+    if (queryConditions.length > 0) {
+      finalQuery.$and = queryConditions;
+    } else {
+      // Should not happen if isActive is always there, but as a fallback
+      finalQuery = { isActive: true };
     }
 
     const sortObj = {}
@@ -59,16 +101,16 @@ router.get('/', async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit)
     
     const [properties, total] = await Promise.all([
-      Property.find(query)
+      Property.find(finalQuery)
         .sort(sortObj)
         .skip(skip)
         .limit(parseInt(limit))
         .populate('owner', 'fullName email phone avatar')
         .lean(),
-      Property.countDocuments(query)
+      Property.countDocuments(finalQuery)
     ])
 
-    console.log(`✅ Found ${properties.length}/${total} properties`)
+    console.log(`✅ Found ${properties.length}/${total} properties for query:`, JSON.stringify(finalQuery))
 
     res.json({
       success: true,

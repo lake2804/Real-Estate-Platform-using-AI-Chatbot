@@ -535,24 +535,33 @@ const loadFeaturedProjects = async () => {
     console.log('🔄 Loading projects (using all endpoint)...')
     
     // ✅ Use all projects endpoint since featured is empty
-    const response = await getFeaturedProjects(8); // Using helper
+    const response = await $api('/projects?limit=8')
     console.log('📦 Projects API Response:', response)
     
     if (response?.success && response?.data) {
       const transformedProjects = response.data
         .map(transformProject)
-        .filter(Boolean)
-      
-      projects.value = transformedProjects
-      console.log(`✅ Loaded ${projects.value.length} projects`)
+        .filter(Boolean);
+      projects.value = transformedProjects;
+      console.log('[index.vue] loadFeaturedProjects - Transformed Projects (sample):', JSON.stringify(projects.value.slice(0, 2)));
+    } else if (response?.data && Array.isArray(response.data)) {
+      const transformedProjects = response.data
+        .map(transformProject)
+        .filter(Boolean);
+      projects.value = transformedProjects;
+      console.log('[index.vue] loadFeaturedProjects - Transformed Projects from direct array (sample):', JSON.stringify(projects.value.slice(0, 2)));
+    } else {
+      console.warn('[index.vue] loadFeaturedProjects - No projects data in response:', JSON.stringify(response));
+      projects.value = [];
     }
   } catch (error) {
-    console.error('❌ Error loading projects:', error)
-    projects.value = []
+    console.error('[index.vue] loadFeaturedProjects - Caught Error:', error.message, JSON.stringify(error.data));
+    projects.value = [];
   } finally {
-    isLoadingProjects.value = false
+    isLoadingProjects.value = false;
+    console.log('[index.vue] loadFeaturedProjects - Finished load. isLoadingProjects:', isLoadingProjects.value);
   }
-}
+};
 
 const loadRentalProperties = async () => {
   try {
@@ -560,24 +569,33 @@ const loadRentalProperties = async () => {
     console.log('🔄 Loading rental properties...')
     
     // ✅ Keep existing - this is working
-    const response = await getPropertiesForRent(12); // Using helper, assuming it handles featured=true and type=rent
+    const response = await $api('/properties?type=rent&limit=12&featured=true')
     console.log('📦 Rentals API Response:', response)
     
     if (response?.success && response?.data) {
       const transformedRentals = response.data
         .map(transformProperty)
-        .filter(Boolean)
-      
-      rentalProperties.value = transformedRentals
-      console.log(`✅ Loaded ${rentalProperties.value.length} rental properties`)
+        .filter(Boolean);
+      rentalProperties.value = transformedRentals;
+      console.log('[index.vue] loadRentalProperties - Transformed Rental Properties (sample):', JSON.stringify(rentalProperties.value.slice(0, 2)));
+    } else if (response?.data && Array.isArray(response.data)) {
+      const transformedRentals = response.data
+        .map(transformProperty)
+        .filter(Boolean);
+      rentalProperties.value = transformedRentals;
+      console.log('[index.vue] loadRentalProperties - Transformed Rental Properties from direct array (sample):', JSON.stringify(rentalProperties.value.slice(0, 2)));
+    } else {
+      console.warn('[index.vue] loadRentalProperties - No rental properties data in response:', JSON.stringify(response));
+      rentalProperties.value = [];
     }
   } catch (error) {
-    console.error('❌ Error loading rentals:', error)
-    rentalProperties.value = []
+    console.error('[index.vue] loadRentalProperties - Caught Error:', error.message, JSON.stringify(error.data));
+    rentalProperties.value = [];
   } finally {
-    isLoadingRentals.value = false
+    isLoadingRentals.value = false;
+    console.log('[index.vue] loadRentalProperties - Finished load. isLoadingRentals:', isLoadingRentals.value);
   }
-}
+};
 
 const loadSaleProperties = async () => {
   try {
@@ -585,24 +603,33 @@ const loadSaleProperties = async () => {
     console.log('🔄 Loading sale properties...')
     
     // ✅ Keep existing - this is working
-    const response = await getPropertiesForSale(12); // Using helper, assuming it handles featured=true and type=sale
+    const response = await $api('/properties?type=sale&limit=12&featured=true')
     console.log('📦 Sales API Response:', response)
     
     if (response?.success && response?.data) {
       const transformedSales = response.data
         .map(transformProperty)
-        .filter(Boolean)
-      
-      saleProperties.value = transformedSales
-      console.log(`✅ Loaded ${saleProperties.value.length} sale properties`)
+        .filter(Boolean);
+      saleProperties.value = transformedSales;
+      console.log('[index.vue] loadSaleProperties - Transformed Sale Properties (sample):', JSON.stringify(saleProperties.value.slice(0, 2)));
+    } else if (response?.data && Array.isArray(response.data)) {
+      const transformedSales = response.data
+        .map(transformProperty)
+        .filter(Boolean);
+      saleProperties.value = transformedSales;
+      console.log('[index.vue] loadSaleProperties - Transformed Sale Properties from direct array (sample):', JSON.stringify(saleProperties.value.slice(0, 2)));
+    } else {
+      console.warn('[index.vue] loadSaleProperties - No sale properties data in response:', JSON.stringify(response));
+      saleProperties.value = [];
     }
   } catch (error) {
-    console.error('❌ Error loading sales:', error)
-    saleProperties.value = []
+    console.error('[index.vue] loadSaleProperties - Caught Error:', error.message, JSON.stringify(error.data));
+    saleProperties.value = [];
   } finally {
-    isLoadingSales.value = false
+    isLoadingSales.value = false;
+    console.log('[index.vue] loadSaleProperties - Finished load. isLoadingSales:', isLoadingSales.value);
   }
-}
+};
 
 const loadFeaturedNews = async () => {
   try {
@@ -611,23 +638,32 @@ const loadFeaturedNews = async () => {
     console.log('🔄 Loading news (using all endpoint)...')
     
     // ✅ Use all news endpoint since featured is empty
-    const response = await getFeaturedNews(6); // Using helper
+    const response = await $api('/news?limit=6')
     console.log('📦 News API Response:', response)
     
     if (response?.success && response?.data) {
       const transformedNews = response.data
         .map(transformNews)
-        .filter(Boolean)
-      
-      news.value = transformedNews
-      console.log(`✅ Loaded ${news.value.length} news articles`)
+        .filter(Boolean);
+      news.value = transformedNews;
+      console.log('[index.vue] loadFeaturedNews - Transformed News (sample):', JSON.stringify(news.value.slice(0, 2)));
+    } else if (response?.data && Array.isArray(response.data)) {
+      const transformedNews = response.data
+        .map(transformNews)
+        .filter(Boolean);
+      news.value = transformedNews;
+      console.log('[index.vue] loadFeaturedNews - Transformed News from direct array (sample):', JSON.stringify(news.value.slice(0, 2)));
+    } else {
+      console.warn('[index.vue] loadFeaturedNews - No news data in response:', JSON.stringify(response));
+      news.value = [];
     }
   } catch (error) {
-    console.error('❌ Error loading news:', error)
-    newsError.value = error.message || 'Không thể tải tin tức'
-    news.value = []
+    console.error('[index.vue] loadFeaturedNews - Caught Error:', error.message, JSON.stringify(error.data));
+    newsError.value = error.message || 'Không thể tải tin tức';
+    news.value = [];
   } finally {
-    newsLoading.value = false
+    newsLoading.value = false;
+    console.log('[index.vue] loadFeaturedNews - Finished load. newsLoading:', newsLoading.value, 'newsError:', newsError.value);
   }
 }
 
