@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 
 // Corrected import to use .js extension
-const User = require('../models/User.js')
+const User = require('../models/User.cjs')
 
 // GET /api/users - Get all users (admin only)
 router.get('/', async (req, res) => {

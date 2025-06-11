@@ -125,11 +125,13 @@ export const useApi = () => {
     // ✅ Projects API
     getFeaturedProjects: async (limit = 8, filters = {}) => {
       try {
+        console.log('🏗️ [API] Fetching featured projects...')
         const params = new URLSearchParams({
           limit: limit.toString(),
           ...filters
         })
         const response = await $api(`/projects/featured?${params}`)
+        console.log('🏗️ [API] Featured projects response:', response)
         return response
       } catch (error) {
         console.error('❌ Error getting featured projects:', error)
@@ -162,7 +164,9 @@ export const useApi = () => {
 
     getFeaturedNews: async (limit = 6) => {
       try {
+        console.log('📰 [API] Fetching featured news...')
         const response = await $api(`/news/featured?limit=${limit}`)
+        console.log('📰 [API] Featured news response:', response)
         return response
       } catch (error) {
         console.error('❌ Error getting featured news:', error)

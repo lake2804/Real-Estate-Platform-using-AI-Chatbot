@@ -5,6 +5,7 @@
       class="flex flex-col items-center justify-center w-full pt-6 pb-2 bg-white"
       style="min-height: 600px"
     >
+      <!-- Hero content... (unchanged) -->
       <div
         class="flex flex-col items-center justify-between w-full gap-12 px-4 mx-auto mt-20 md:flex-row max-w-7xl"
       >
@@ -109,7 +110,7 @@
             v-for="(tab, index) in projectTabs"
             :key="index"
             @click="activeProjectTab = index"
-            :class="[
+            :class=" [
               'pb-3 font-medium transition-colors whitespace-nowrap font-inter',
               activeProjectTab === index
                 ? 'text-[#F62E56] border-b-2 border-[#F62E56]'
@@ -199,7 +200,7 @@
             v-for="(tab, index) in rentalTabs"
             :key="index"
             @click="activeRentalTab = index"
-            :class="[
+            :class=" [
               'pb-3 font-medium transition-colors whitespace-nowrap font-inter',
               activeRentalTab === index
                 ? 'text-[#F62E56] border-b-2 border-[#F62E56]'
@@ -276,7 +277,7 @@
             v-for="(tab, index) in saleTabs"
             :key="index"
             @click="activeSaleTab = index"
-            :class="[
+            :class=" [
               'pb-3 font-medium transition-colors whitespace-nowrap font-inter',
               activeSaleTab === index
                 ? 'text-[#F62E56] border-b-2 border-[#F62E56]'
@@ -338,7 +339,7 @@
       </div>
     </div>
 
-    <!-- News Section -->
+    <!-- ✅ NEWS SECTION - FIXED CLIENT CHECK -->
     <div class="container px-8 py-4 mx-auto max-w-7xl">
       <h2 class="mb-6 text-[32px] font-bold text-gray-900 font-inter">
         Tin tức bất động sản
@@ -351,7 +352,7 @@
             v-for="(tab, index) in newsTabs"
             :key="index"
             @click="activeNewsTab = index"
-            :class="[
+            :class=" [
               'pb-3 font-medium transition-colors whitespace-nowrap font-inter',
               activeNewsTab === index
                 ? 'text-[#F62E56] border-b-2 border-[#F62E56]'
@@ -360,6 +361,20 @@
           >
             {{ tab }}
           </button>
+        </div>
+      </div>
+
+      <!-- ✅ DEBUG INFO - Use isClient ref -->
+      <div v-if="isClient" class="p-4 mb-4 bg-yellow-100 border rounded">
+        <h4 class="font-bold">News Debug:</h4>
+        <p>Loading: {{ isLoadingNews }}</p>
+        <p>Error: {{ newsError }}</p>
+        <p>News Count: {{ news.length }}</p>
+        <p>Filtered Count: {{ filteredNews.length }}</p>
+        <p>First Item: {{ news[0]?.title || 'None' }}</p>
+        <div v-if="news.length > 0" class="mt-2">
+          <h5 class="font-semibold">Sample News Item:</h5>
+          <pre class="overflow-auto text-xs max-h-32">{{ JSON.stringify(news[0], null, 2) }}</pre>
         </div>
       </div>
 
@@ -381,21 +396,40 @@
         </div>
       </div>
 
+      <!-- Error State -->
+      <div v-else-if="newsError" class="py-12 text-center">
+        <div class="flex flex-col items-center">
+          <svg class="w-16 h-16 mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <h3 class="mb-2 text-lg font-semibold text-red-600">Lỗi tải tin tức</h3>
+          <p class="mb-4 text-red-500">{{ newsError }}</p>
+          <button 
+            @click="retryLoadNews()" 
+            class="px-4 py-2 text-white transition-colors bg-red-500 rounded hover:bg-red-600"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+
       <!-- News Grid -->
-      <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div 
+        v-else-if="filteredNews.length > 0" 
+        class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+      >
         <article
           v-for="article in filteredNews"
           :key="article._id || article.id"
           class="overflow-hidden transition-shadow bg-white rounded-lg shadow-sm hover:shadow-lg"
         >
-        {{article}}
           <NuxtLink :to="`/news/${article._id || article.id}`" class="block">
             <img
-              :src="
-                article.image || article.thumbnail || '/images/news-default.jpg'
-              "
+              :src="article.image"
               :alt="article.title"
               class="object-cover w-full h-48"
+              @error="handleImageError"
+              loading="lazy"
             />
             <div class="p-6">
               <div class="flex items-center mb-3">
@@ -414,18 +448,14 @@
                 {{ article.title }}
               </h3>
               <p class="text-sm text-gray-600 line-clamp-2">
-                {{
-                  article.excerpt ||
-                  article.description ||
-                  truncateText(article.content, 100)
-                }}
+                {{ article.excerpt || truncateText(article.content, 100) }}
               </p>
               <div class="flex items-center justify-between mt-4">
                 <span class="text-xs text-gray-500">
-                  {{ article.readTime || 5 }} phút đọc
+                  {{ article.readTime }} phút đọc
                 </span>
                 <span class="text-xs text-gray-500">
-                  {{ formatNumber(article.views || 0) }} lượt xem
+                  {{ formatNumber(article.views) }} lượt xem
                 </span>
               </div>
             </div>
@@ -434,16 +464,18 @@
       </div>
 
       <!-- No News Message -->
-      <div
-        v-if="!isLoadingNews && filteredNews.length === 0"
-        class="py-12 text-center"
-      >
-        <h3 class="mb-2 text-lg font-medium text-gray-600">
-          Không có tin tức {{ newsTabs[activeNewsTab] }}
-        </h3>
-        <p class="text-gray-500">
-          Thử chọn danh mục khác hoặc xem tất cả tin tức.
-        </p>
+      <div v-else class="py-12 text-center">
+        <div class="flex flex-col items-center">
+          <svg class="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+          </svg>
+          <h3 class="mb-2 text-lg font-medium text-gray-600">
+            Không có tin tức {{ newsTabs[activeNewsTab] }}
+          </h3>
+          <p class="text-gray-500">
+            Thử chọn danh mục khác hoặc xem tất cả tin tức.
+          </p>
+        </div>
       </div>
 
       <!-- View More Button -->
@@ -481,6 +513,9 @@ useHead({
   ],
 });
 
+// ✅ CLIENT-SIDE CHECK - Fix for Nuxt 3
+const isClient = ref(false)
+
 // ✅ USE REAL API COMPOSABLE
 const {
   getFeaturedProjects,
@@ -493,7 +528,7 @@ const {
 const isLoadingProjects = ref(true);
 const isLoadingRentals = ref(true);
 const isLoadingSales = ref(true);
-const newsLoading = ref(true);
+const isLoadingNews = ref(true);
 const newsError = ref(null);
 
 // ✅ DATA STORAGE
@@ -560,7 +595,7 @@ const cityMapping = {
   15: ["Thai Nguyen", "Thái Nguyên"],
 };
 
-// ✅ ENHANCED TRANSFORM FUNCTIONS - ENSURE VALID IDs
+// ✅ TRANSFORM FUNCTIONS
 const transformProperty = (property) => {
   if (!property?._id && !property?.id) {
     console.warn("⚠️ Property missing ID:", property);
@@ -664,34 +699,31 @@ const transformNews = (article) => {
   };
 };
 
+// ✅ LOADING FUNCTIONS WITH DUPLICATE PREVENTION
 const loadFeaturedProjects = async () => {
+  if (!isLoadingProjects.value) return; // Prevent duplicate calls
+  
   try {
-    isLoadingProjects.value = true;
-    const response = await getFeaturedProjects();
+    console.log('🏗️ [HomePage] Loading featured projects...')
+    const response = await getFeaturedProjects(8);
 
     if (response?.success && response?.data) {
       const transformedProjects = response.data
         .map(transformProject)
         .filter(Boolean);
       projects.value = transformedProjects;
+      console.log(`🏗️ [HomePage] Loaded ${transformedProjects.length} projects`)
     } else if (response?.data && Array.isArray(response.data)) {
       const transformedProjects = response.data
         .map(transformProject)
         .filter(Boolean);
       projects.value = transformedProjects;
     } else {
-      console.warn(
-        "[index.vue] loadFeaturedProjects - No projects data in response:",
-        JSON.stringify(response)
-      );
+      console.warn("No projects data received");
       projects.value = [];
     }
   } catch (error) {
-    console.error(
-      "[index.vue] loadFeaturedProjects - Caught Error:",
-      error.message,
-      JSON.stringify(error.data)
-    );
+    console.error("Error loading projects:", error);
     projects.value = [];
   } finally {
     isLoadingProjects.value = false;
@@ -699,25 +731,28 @@ const loadFeaturedProjects = async () => {
 };
 
 const loadRentalProperties = async () => {
+  if (!isLoadingRentals.value) return;
+  
   try {
-    isLoadingRentals.value = true;
-    const response = await getPropertiesForRent();
+    console.log('🏠 [HomePage] Loading rental properties...')
+    const response = await getPropertiesForRent(12);
 
     if (response?.success && response?.data) {
       const transformedRentals = response.data
         .map(transformProperty)
         .filter(Boolean);
       rentalProperties.value = transformedRentals;
+      console.log(`🏠 [HomePage] Loaded ${transformedRentals.length} rentals`)
     } else if (response?.data && Array.isArray(response.data)) {
       const transformedRentals = response.data
         .map(transformProperty)
         .filter(Boolean);
       rentalProperties.value = transformedRentals;
-
     } else {
       rentalProperties.value = [];
     }
   } catch (error) {
+    console.error("Error loading rentals:", error);
     rentalProperties.value = [];
   } finally {
     isLoadingRentals.value = false;
@@ -725,72 +760,77 @@ const loadRentalProperties = async () => {
 };
 
 const loadSaleProperties = async () => {
+  if (!isLoadingSales.value) return;
+  
   try {
-    isLoadingSales.value = true;
-    const response = await getPropertiesForSale();
+    console.log('🏢 [HomePage] Loading sale properties...')
+    const response = await getPropertiesForSale(12);
 
     if (response?.success && response?.data) {
       const transformedSales = response.data
         .map(transformProperty)
         .filter(Boolean);
       saleProperties.value = transformedSales;
+      console.log(`🏢 [HomePage] Loaded ${transformedSales.length} sales`)
     } else if (response?.data && Array.isArray(response.data)) {
       const transformedSales = response.data
         .map(transformProperty)
         .filter(Boolean);
       saleProperties.value = transformedSales;
     } else {
-      console.warn(
-        "[index.vue] loadSaleProperties - No sale properties data in response:",
-        JSON.stringify(response)
-      );
+      console.warn("No sale properties data received");
       saleProperties.value = [];
     }
   } catch (error) {
-    console.error(
-      "[index.vue] loadSaleProperties - Caught Error:",
-      error.message,
-      JSON.stringify(error.data)
-    );
+    console.error("Error loading sales:", error);
     saleProperties.value = [];
   } finally {
     isLoadingSales.value = false;
   }
 };
 
+// ✅ NEWS LOADING WITH PREVENTION
 const loadFeaturedNews = async () => {
+  if (!isLoadingNews.value) return; // Prevent duplicate calls
+  
   try {
-    newsLoading.value = true;
+    console.log('📰 [HomePage] Loading featured news...')
     newsError.value = null;
-    const response = await getFeaturedNews();
-    console.log({response});
-
+    const response = await getFeaturedNews(6);
+    console.log('📰 [HomePage] News response:', response);
 
     if (response?.success && response?.data) {
       const transformedNews = response.data.map(transformNews).filter(Boolean);
       news.value = transformedNews;
+      console.log(`📰 [HomePage] Loaded ${transformedNews.length} news articles`)
+      console.log('📰 [HomePage] First news item:', transformedNews[0])
     } else if (response?.data && Array.isArray(response.data)) {
       const transformedNews = response.data.map(transformNews).filter(Boolean);
       news.value = transformedNews;
+      console.log(`📰 [HomePage] Loaded ${transformedNews.length} news articles (fallback)`)
     } else {
+      console.warn("No news data received");
       news.value = [];
     }
   } catch (error) {
-    console.error(
-      "[index.vue] loadFeaturedNews - Caught Error:",
-      error.message,
-      JSON.stringify(error.data)
-    );
+    console.error("Error loading news:", error);
     newsError.value = error.message || "Không thể tải tin tức";
     news.value = [];
   } finally {
-    newsLoading.value = false;
+    isLoadingNews.value = false;
   }
 };
 
-// ✅ ENHANCED FILTER FUNCTION
+// ✅ RETRY FUNCTION
+const retryLoadNews = async () => {
+  console.log('🔄 [HomePage] Retrying news load...')
+  isLoadingNews.value = true;
+  await loadFeaturedNews();
+};
+
+// ✅ FILTER FUNCTION
 const filterByCity = (items, tabIndex) => {
-  if (tabIndex === 0 || !items.length) return items; // Tất cả
+  if (tabIndex === 0 || !items.length) return items;
 
   const cityVariants = cityMapping[tabIndex];
   if (!cityVariants) return items;
@@ -803,31 +843,17 @@ const filterByCity = (items, tabIndex) => {
   });
 };
 
-// ✅ LOAD ALL DATA
-const loadHomeData = async () => {
-  // Load all data in parallel
-  await Promise.all([
-    loadFeaturedProjects(),
-    loadRentalProperties(),
-    loadSaleProperties(),
-    loadFeaturedNews(),
-  ]);
-};
-
-// ✅ FILTERED DATA COMPUTED
+// ✅ COMPUTED PROPERTIES
 const filteredProjects = computed(() => {
-  const filtered = filterByCity(projects.value, activeProjectTab.value);
-  return filtered;
+  return filterByCity(projects.value, activeProjectTab.value);
 });
 
 const filteredRentals = computed(() => {
-  const filtered = filterByCity(rentalProperties.value, activeRentalTab.value);
-  return filtered;
+  return filterByCity(rentalProperties.value, activeRentalTab.value);
 });
 
 const filteredSales = computed(() => {
-  const filtered = filterByCity(saleProperties.value, activeSaleTab.value);
-  return filtered;
+  return filterByCity(saleProperties.value, activeSaleTab.value);
 });
 
 const filteredNews = computed(() => {
@@ -836,41 +862,10 @@ const filteredNews = computed(() => {
   return news.value.filter((n) => n.category === targetCategory);
 });
 
-// ✅ STATS COMPUTED
 const totalStats = computed(() => ({
   properties: rentalProperties.value.length + saleProperties.value.length,
   news: news.value.length,
 }));
-
-// ✅ SEARCH HANDLER
-const onSearch = (searchData) => {
-  const queryParams = new URLSearchParams();
-  if (searchData.keyword) queryParams.set("keyword", searchData.keyword);
-  if (searchData.location) queryParams.set("location", searchData.location);
-  if (searchData.priceRange)
-    queryParams.set("priceRange", searchData.priceRange);
-
-  const queryString = queryParams.toString();
-
-  if (searchData.type === "rent") {
-    navigateTo(`/rent${queryString ? "?" + queryString : ""}`);
-  } else {
-    navigateTo(`/buy${queryString ? "?" + queryString : ""}`);
-  }
-};
-
-// ✅ REFRESH FUNCTIONS
-const refreshNews = async () => {
-  await loadFeaturedNews();
-};
-
-const refreshProjects = async () => {
-  await loadFeaturedProjects();
-};
-
-const refreshProperties = async () => {
-  await Promise.all([loadRentalProperties(), loadSaleProperties()]);
-};
 
 // ✅ HELPER FUNCTIONS
 const formatDate = (dateString) => {
@@ -887,14 +882,56 @@ const formatDate = (dateString) => {
   }
 };
 
+const formatNumber = (num) => {
+  if (!num) return '0'
+  return new Intl.NumberFormat('vi-VN').format(num)
+}
+
+const truncateText = (text, length = 100) => {
+  if (!text) return ''
+  return text.length > length ? text.substring(0, length) + '...' : text
+}
+
 const handleImageError = (event) => {
   event.target.src =
     "https://picsum.photos/600/400?random=" + Math.floor(Math.random() * 1000);
 };
 
-// ✅ LOAD DATA ON MOUNT
+const onSearch = (searchData) => {
+  const queryParams = new URLSearchParams();
+  if (searchData.keyword) queryParams.set("keyword", searchData.keyword);
+  if (searchData.location) queryParams.set("location", searchData.location);
+  if (searchData.priceRange)
+    queryParams.set("priceRange", searchData.priceRange);
+
+  const queryString = queryParams.toString();
+
+  if (searchData.type === "rent") {
+    navigateTo(`/rent${queryString ? "?" + queryString : ""}`);
+  } else {
+    navigateTo(`/buy${queryString ? "?" + queryString : ""}`);
+  }
+};
+
+// ✅ LOAD DATA ONLY ONCE
+const loadHomeData = async () => {
+  console.log('🏠 [HomePage] Starting data load...')
+  
+  await Promise.all([
+    loadFeaturedProjects(),
+    loadRentalProperties(),
+    loadSaleProperties(),
+    loadFeaturedNews(),
+  ]);
+  
+  console.log('🏠 [HomePage] All data loaded')
+};
+
+// ✅ MOUNT LIFECYCLE
 onMounted(() => {
-  loadHomeData();
+  console.log('🏠 [HomePage] Component mounted')
+  isClient.value = true // Set client flag
+  loadHomeData()
 });
 </script>
 

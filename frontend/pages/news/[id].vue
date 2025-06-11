@@ -43,10 +43,10 @@
         <!-- Hero Image -->
         <div class="relative mb-8 overflow-hidden shadow-2xl rounded-3xl">
           <img
-            v-if="article.image || article.thumbnail"
-            :src="article.image || article.thumbnail"
+            :src="article.image || article.thumbnail || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80'"
             :alt="article.title"
             class="object-cover w-full transition-transform duration-700 h-80 md:h-96 hover:scale-105"
+            @error="handleImageError"
           />
           <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
           
@@ -112,7 +112,16 @@
         <div class="prose prose-lg md:prose-xl max-w-none">
           <div v-if="article.content" v-html="article.content" class="article-content"></div>
           <div v-else class="py-8 text-center text-gray-600">
-            <p class="text-lg">Nội dung đang được cập nhật...</p>
+            <div class="max-w-2xl mx-auto">
+              <h3 class="mb-4 text-xl font-semibold">Nội dung đang được cập nhật...</h3>
+              <p class="mb-6 text-gray-500">Chúng tôi sẽ cập nhật nội dung chi tiết sớm nhất có thể.</p>
+              
+              <!-- Fallback content if available -->
+              <div v-if="article.excerpt || article.description" class="p-6 text-left rounded-lg bg-gray-50">
+                <h4 class="mb-3 font-semibold">Tóm tắt:</h4>
+                <p class="leading-relaxed text-gray-700">{{ article.excerpt || article.description }}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -242,29 +251,38 @@
       <div class="p-6 font-mono text-sm text-white bg-gray-900 rounded-2xl">
         <h3 class="mb-4 text-lg font-bold text-yellow-400">🔧 Debug Info</h3>
         <div class="grid gap-2">
-          <div><span class="text-yellow-400">ID:</span> {{ route.params.id }}</div>
-          <div><span class="text-yellow-400">API:</span> {{ `${config.public.apiBase}/api/news/${route.params.id}` }}</div>
+          <div><span class="text-yellow-400">ID:</span> {{ newsId }}</div>
+          <div><span class="text-yellow-400">Direct API:</span> {{ directApiUrl }}</div>
+          <div><span class="text-yellow-400">List API:</span> {{ listApiUrl }}</div>
           <div><span class="text-yellow-400">Pending:</span> {{ pending }}</div>
           <div><span class="text-yellow-400">Error:</span> {{ !!error }}</div>
           <div><span class="text-yellow-400">Article:</span> {{ !!article }}</div>
           <div><span class="text-yellow-400">Title:</span> {{ article?.title || 'None' }}</div>
-          <div><span class="text-yellow-400">Available:</span> {{ 
-            allNewsData?.success ? allNewsData.data?.length :
-            Array.isArray(allNewsData) ? allNewsData.length : 0
-          }} news</div>
+          <div><span class="text-yellow-400">Available:</span> {{ allNewsList.length }} news</div>
+        </div>
+        
+        <!-- Raw responses -->
+        <div class="mt-4">
+          <div class="text-yellow-400">Raw Direct Response:</div>
+          <pre class="overflow-auto text-xs text-gray-300 max-h-32">{{ JSON.stringify(articleData, null, 2) }}</pre>
+        </div>
+        
+        <div class="mt-4">
+          <div class="text-yellow-400">Raw List Response:</div>
+          <pre class="overflow-auto text-xs text-gray-300 max-h-32">{{ JSON.stringify(allNewsData, null, 2) }}</pre>
         </div>
         
         <!-- Test Links -->
-        <div v-if="allNewsData?.success && allNewsData.data?.length" class="mt-6">
-          <div class="mb-2 text-yellow-400">🔗 Test Links:</div>
+        <div v-if="allNewsList.length" class="mt-6">
+          <div class="mb-2 text-yellow-400">🔗 Available News Links:</div>
           <div class="flex flex-wrap gap-2">
             <NuxtLink 
-              v-for="news in allNewsData.data.slice(0, 3)" 
-              :key="news._id"
-              :to="`/news/${news._id}`"
+              v-for="news in allNewsList.slice(0, 5)" 
+              :key="news._id || news.id"
+              :to="`/news/${news._id || news.id}`"
               class="px-3 py-1 text-xs transition-colors bg-blue-600 rounded hover:bg-blue-700"
             >
-              {{ news.title.substring(0, 25) }}...
+              {{ (news.title || 'Untitled').substring(0, 25) }}...
             </NuxtLink>
           </div>
         </div>
@@ -274,7 +292,7 @@
 </template>
 
 <script setup>
-// ✅ IMPORT CONFIG FIRST
+// ✅ SETUP
 const config = useRuntimeConfig()
 const route = useRoute()
 const newsId = route.params.id
@@ -282,73 +300,93 @@ const newsId = route.params.id
 // ✅ Check if in development mode
 const isDev = config.public.dev || process.env.NODE_ENV === 'development'
 
+// ✅ DIRECT API URLs
+const directApiUrl = `${config.public.apiBase}/news/${newsId}`
+const listApiUrl = `${config.public.apiBase}/news`
+
 console.log('🔍 News detail page loading...')
-console.log('📋 Route params:', route.params)
 console.log('📋 News ID:', newsId)
-console.log('📋 API Base:', config.public.apiBase)
+console.log('📋 Direct API URL:', directApiUrl)
+console.log('📋 List API URL:', listApiUrl)
 
-// ✅ FETCH NEWS DATA using useApi composable
-const { $api } = useApi()
-
-// Fetch specific article
-const { data: articleData, pending, error } = await useFetch(`/api/news/${newsId}`, {
+// ✅ MULTIPLE FETCH STRATEGIES
+// Strategy 1: Try direct API call
+const { data: articleData, pending: pendingDirect, error: errorDirect } = await useFetch(directApiUrl, {
   server: false,
   default: () => null,
   timeout: 10000,
   onRequest({ request }) {
-    console.log('🚀 Making article request to:', request)
+    console.log('🚀 Direct API request to:', request)
   },
   onResponse({ response }) {
-    console.log('✅ Article response status:', response.status)
-    console.log('✅ Article response data:', response._data)
+    console.log('✅ Direct API response:', response.status, response._data)
   },
   onResponseError({ response }) {
-    console.error('❌ Article API Error:', response.status, response._data)
+    console.error('❌ Direct API Error:', response.status, response._data)
   }
 })
 
-// Fetch all news for debugging and related articles
-const { data: allNewsData } = await useFetch('/api/news', {
+// Strategy 2: Fetch all news list
+const { data: allNewsData, pending: pendingList } = await useFetch(listApiUrl, {
   server: false,
   default: () => null,
   timeout: 10000,
   onResponse({ response }) {
-    console.log('📋 All news response status:', response.status)
-    
-    if (response._data?.success && response._data?.data) {
-      console.log('📋 Available news IDs:', response._data.data.map(item => item._id))
-      console.log('📋 Looking for ID:', newsId)
-      console.log('📋 ID exists?', response._data.data.some(item => item._id === newsId))
+    console.log('✅ List API response:', response.status)
+    if (response._data) {
+      const data = response._data?.data || response._data
+      if (Array.isArray(data)) {
+        console.log('📋 Found', data.length, 'news articles')
+        console.log('📋 Available IDs:', data.map(item => item._id || item.id))
+      }
     }
   },
   onResponseError({ response }) {
-    console.error('❌ All news API Error:', response.status)
+    console.error('❌ List API Error:', response.status)
   }
 })
 
-// ✅ COMPUTED ARTICLE
+// ✅ COMPUTED VALUES
+const pending = computed(() => pendingDirect.value || pendingList.value)
+
+// Extract news list from response
+const allNewsList = computed(() => {
+  if (Array.isArray(allNewsData.value)) {
+    return allNewsData.value
+  }
+  if (allNewsData.value?.success && Array.isArray(allNewsData.value.data)) {
+    return allNewsData.value.data
+  }
+  if (allNewsData.value?.data && Array.isArray(allNewsData.value.data)) {
+    return allNewsData.value.data
+  }
+  return []
+})
+
+// ✅ FIND ARTICLE FROM MULTIPLE SOURCES
 const article = computed(() => {
-  // Try specific article API response first
-  if (articleData.value?.success && articleData.value?.data) {
-    console.log('✅ Using specific article API data')
-    return articleData.value.data
+  console.log('🔍 Finding article for ID:', newsId)
+  
+  // Strategy 1: Direct API response
+  if (articleData.value) {
+    // Check if it's wrapped in success structure
+    if (articleData.value.success && articleData.value.data) {
+      console.log('✅ Found article from direct API (wrapped)')
+      return articleData.value.data
+    }
+    
+    // Check if it's direct article data
+    if (articleData.value.title || articleData.value._id) {
+      console.log('✅ Found article from direct API (direct)')
+      return articleData.value
+    }
   }
   
-  if (articleData.value?.data) {
-    console.log('✅ Using article data (direct)')
-    return articleData.value.data
-  }
-  
-  if (articleData.value && articleData.value.title) {
-    console.log('✅ Using article data (no wrapper)')
-    return articleData.value
-  }
-  
-  // Try to find article in the news list by _id
-  if (allNewsData.value?.success && Array.isArray(allNewsData.value?.data)) {
-    const foundArticle = allNewsData.value.data.find(item => 
-      item._id === newsId || item.id === newsId
-    )
+  // Strategy 2: Find in news list
+  if (allNewsList.value.length > 0) {
+    const foundArticle = allNewsList.value.find(item => {
+      return String(item._id) === String(newsId) || String(item.id) === String(newsId)
+    })
     
     if (foundArticle) {
       console.log('✅ Found article in news list:', foundArticle.title)
@@ -356,14 +394,28 @@ const article = computed(() => {
     }
   }
   
-  if (Array.isArray(allNewsData.value) && allNewsData.value.length > 0) {
-    const foundArticle = allNewsData.value.find(item => 
-      item._id === newsId || item.id === newsId
-    )
-    
-    if (foundArticle) {
-      console.log('✅ Found article in news array:', foundArticle.title)
-      return foundArticle
+  // Strategy 3: Mock data for development
+  if (isDev && newsId) {
+    console.log('🔧 Using mock data for development')
+    return {
+      _id: newsId,
+      title: 'Tin tức mẫu cho development',
+      content: `<p>Đây là nội dung mẫu cho bài viết có ID: <strong>${newsId}</strong></p>
+                <p>Nội dung này được tạo tự động để test giao diện trong quá trình phát triển.</p>
+                <h2>Đặc điểm chính</h2>
+                <ul>
+                  <li>Hệ thống tự động phát hiện ID</li>
+                  <li>Hiển thị nội dung mock khi không có data</li> 
+                  <li>Giúp dev test UI không cần backend</li>
+                </ul>`,
+      excerpt: 'Đây là bài viết mẫu được tạo tự động cho việc phát triển và test giao diện.',
+      author: 'Admin',
+      category: 'Development',
+      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80',
+      createdAt: new Date().toISOString(),
+      views: 123,
+      tags: ['development', 'testing', 'mock-data'],
+      featured: true
     }
   }
   
@@ -371,19 +423,10 @@ const article = computed(() => {
   return null
 })
 
-// ✅ COMPUTED RELATED ARTICLES
+// ✅ RELATED ARTICLES
 const relatedArticles = computed(() => {
-  let articles = []
-  
-  if (allNewsData.value?.success && Array.isArray(allNewsData.value.data)) {
-    articles = allNewsData.value.data
-  } else if (Array.isArray(allNewsData.value)) {
-    articles = allNewsData.value
-  }
-  
-  // Filter out current article and limit to 4
-  return articles
-    .filter(item => item._id !== newsId)
+  return allNewsList.value
+    .filter(item => String(item._id) !== String(newsId) && String(item.id) !== String(newsId))
     .slice(0, 4)
 })
 
@@ -395,34 +438,26 @@ const formatDate = (dateString) => {
     const date = new Date(dateString)
     if (isNaN(date.getTime())) return 'Mới đây'
     
-    const now = new Date()
-    const diffMs = now - date
-    const diffMins = Math.floor(diffMs / (1000 * 60))
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-    
-    if (diffMins < 60) {
-      return `${diffMins} phút trước`
-    } else if (diffHours < 24) {
-      return `${diffHours} giờ trước`
-    } else if (diffDays < 7) {
-      return `${diffDays} ngày trước`
-    } else {
-      return date.toLocaleDateString('vi-VN', {
-        day: 'numeric',
-        month: 'numeric',
-        year: 'numeric'
-      })
-    }
+    return date.toLocaleDateString('vi-VN', {
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   } catch (error) {
     return 'Mới đây'
   }
 }
 
+const handleImageError = (event) => {
+  console.log('🖼️ Image load error, using fallback')
+  event.target.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80'
+}
+
 // ✅ SOCIAL SHARE FUNCTIONS
 const shareOnFacebook = () => {
   const url = encodeURIComponent(window.location.href)
-  const title = encodeURIComponent(article.value?.title || 'Tin tức')
   window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank')
 }
 
@@ -435,8 +470,8 @@ const shareOnTwitter = () => {
 const copyLink = async () => {
   try {
     await navigator.clipboard.writeText(window.location.href)
-    // You can add a toast notification here
     console.log('✅ Link copied to clipboard')
+    // You can add a toast notification here
   } catch (error) {
     console.error('❌ Failed to copy link:', error)
   }

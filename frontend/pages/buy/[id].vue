@@ -84,7 +84,7 @@
             <div>
               <h1 class="mb-2 text-3xl font-bold text-gray-900">{{ property?.title }}</h1>
               <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-bold text-[#F62E56]">{{ property?.price }}</span>
+                <span class="text-3xl font-bold text-[#F62E56]">{{ formatPrice(property?.price) }}</span>
                 <span class="text-gray-500">VND</span>
               </div>
             </div>
@@ -187,7 +187,7 @@
         <section class="p-6 bg-white shadow-lg rounded-xl">
           <h2 class="mb-4 text-xl font-bold">Mô tả chi tiết</h2>
           <div class="leading-relaxed text-gray-700 whitespace-pre-line">
-            {{ property?.description }}
+            {{ property?.description || 'Chưa có mô tả chi tiết.' }}
           </div>
         </section>
 
@@ -239,7 +239,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -250,23 +250,30 @@ definePageMeta({
   title: 'Chi tiết bất động sản'
 })
 
-// Data fetching
+// ✅ FETCH DATA WITH BETTER ERROR HANDLING
+const config = useRuntimeConfig()
 const { getPropertyById } = useApi()
-const { data: propertyData, pending, error, refresh } = await useLazyFetch(`property-${route.params.id}`, () =>
-  getPropertyById(route.params.id)
-)
 
-// Reactive data
-const property = computed(() => {
-  if (propertyData.value?.success && propertyData.value?.data) {
-    return propertyData.value.data
-  }
-  if (propertyData.value?.data) {
-    return propertyData.value.data
-  }
-  return propertyData.value
+const { data: propertyResponse, pending, error } = await useFetch(`/api/properties/${route.params.id}`, {
+  server: false,
+  default: () => null
 })
 
+// ✅ COMPUTED PROPERTY DATA
+const property = computed(() => {
+  if (propertyResponse.value?.success && propertyResponse.value?.data) {
+    return propertyResponse.value.data
+  }
+  if (propertyResponse.value?.data) {
+    return propertyResponse.value.data
+  }
+  if (propertyResponse.value && propertyResponse.value.title) {
+    return propertyResponse.value
+  }
+  return null
+})
+
+// Reactive data
 const activeImage = ref('')
 const currentImageIndex = ref(0)
 const isContactLoading = ref(false)
@@ -286,13 +293,13 @@ const setActiveImage = (image, index) => {
 }
 
 const handleImageError = (event) => {
-  event.target.src = '/api/placeholder/400/300'
+  event.target.src = 'https://picsum.photos/600/400?random=' + Math.floor(Math.random() * 1000)
 }
 
 const formatPrice = (price) => {
   if (!price) return 'Liên hệ'
   if (price >= 1000000000) {
-    return `${(price / 1000000000).toFixed(1)} tỷ`
+    return `${(price / 1000000000).toFixed(1).replace('.0', '')} tỷ`
   }
   if (price >= 1000000) {
     return `${(price / 1000000).toFixed(0)} triệu`
@@ -302,6 +309,11 @@ const formatPrice = (price) => {
 
 const formatLocation = (location) => {
   if (!location) return 'Chưa có thông tin'
+  
+  if (typeof location === 'string') {
+    return location
+  }
+  
   const parts = []
   if (location.address) parts.push(location.address)
   if (location.district) parts.push(location.district)
@@ -333,24 +345,11 @@ const handleContactClick = async () => {
   isContactLoading.value = true
 
   try {
-    console.log('🔧 Contact button clicked for property:', property?.value?.title)
-
-    // Navigate to contact page with property info
-    const navigationUrl = `/contact?from=${encodeURIComponent(route.path)}&title=${encodeURIComponent(property?.value.title)}&propertyId=${property?.value._id}`
-
+    const navigationUrl = `/contact?from=${encodeURIComponent(route.path)}&title=${encodeURIComponent(property?.value?.title || 'Bất động sản')}&propertyId=${property?.value?._id || property?.value?.id}`
     await navigateTo(navigationUrl)
-
   } catch (error) {
     console.error('❌ Error in handleContactClick:', error)
-
-    // Fallback navigation
-    try {
-      await navigateTo(`/contact?from=${encodeURIComponent(route.path)}&title=${encodeURIComponent(property?.value.title || 'Bất động sản')}`)
-    } catch (navError) {
-      console.error('❌ Even fallback navigation failed:', navError)
-      alert('Không thể chuyển đến trang liên hệ. Vui lòng thử lại!')
-    }
-
+    alert('Không thể chuyển đến trang liên hệ. Vui lòng thử lại!')
   } finally {
     setTimeout(() => {
       isContactLoading.value = false
@@ -364,11 +363,8 @@ const handleScheduleViewing = async () => {
   isScheduleLoading.value = true
 
   try {
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
-
     alert('Đã gửi yêu cầu hẹn xem nhà! Chúng tôi sẽ liên hệ với bạn sớm nhất.')
-
   } catch (error) {
     console.error('Error scheduling viewing:', error)
     alert('Có lỗi xảy ra. Vui lòng thử lại sau.')
@@ -379,9 +375,11 @@ const handleScheduleViewing = async () => {
 
 // Initialize active image
 watch(property, (newProperty) => {
-  if (newproperty?.images?.length) {
-    activeImage.value = newproperty?.images[0]
+  if (newProperty?.images?.length) {
+    activeImage.value = newProperty.images[0]
     currentImageIndex.value = 0
+  } else if (newProperty?.image) {
+    activeImage.value = newProperty.image
   }
 }, { immediate: true })
 
@@ -389,17 +387,11 @@ watch(property, (newProperty) => {
 watch(property, (newProperty) => {
   if (newProperty) {
     useHead({
-      title: `${newproperty?.title} - Bán nhà`,
+      title: `${newProperty?.title} - Bán nhà`,
       meta: [
-        { name: 'description', content: newproperty?.description || 'Chi tiết bất động sản' }
+        { name: 'description', content: newProperty?.description || 'Chi tiết bất động sản' }
       ]
     })
   }
 }, { immediate: true })
-
-onMounted(() => {
-  console.log('🔧 Buy detail page mounted')
-  console.log('🔍 Property data:', property?.value)
-  console.log('🔍 Auth user:', authStore.currentUser)
-})
 </script>

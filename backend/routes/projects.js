@@ -1,8 +1,6 @@
 const express = require('express')
-const router = express.Router()
-
-// ✅ FIXED: Import with .cjs extension
 const FeaturedProject = require('../models/FeaturedProject.cjs')
+const router = express.Router()
 
 // GET /api/projects - Get all projects
 router.get('/', async (req, res) => {
@@ -49,9 +47,7 @@ router.get('/featured', async (req, res) => {
     
     console.log(`🌟 Getting featured projects (limit: ${limit})`)
     
-    // ✅ FIXED: Remove extra comma and bracket
     const projects = await FeaturedProject.find({
-      isActive: true,
       $or: [
         { isFeatured: true },
         { featured: true }

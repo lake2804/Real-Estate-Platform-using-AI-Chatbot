@@ -43,16 +43,15 @@
         <div v-for="n in 8" :key="n" class="overflow-hidden bg-white rounded-lg shadow-sm animate-pulse">
           <div class="h-48 bg-gray-300"></div>
           <div class="p-4">
-            <div class="h-4 mb-2 bg-gray-300 rounded"></div>
             <div class="w-3/4 h-4 mb-2 bg-gray-300 rounded"></div>
-            <div class="w-1/2 h-6 bg-gray-300 rounded"></div>
+            <div class="w-1/2 h-4 bg-gray-300 rounded"></div>
           </div>
         </div>
       </div>
 
       <!-- Error State -->
       <div v-else-if="error" class="py-20 text-center">
-        <div class="max-w-md mx-auto">
+        <div class="flex flex-col items-center">
           <svg class="w-16 h-16 mx-auto mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
@@ -70,7 +69,7 @@
       <!-- Results -->
       <div v-else>
         <!-- No Results -->
-        <div v-if="filteredProperties.length === 0" class="py-20 text-center">
+        <div v-if="paginatedProperties.length === 0" class="py-20 text-center">
           <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m5 0v-4a1 1 0 011-1h2a1 1 0 011 1v4M7 7h10M7 11h4"/>
           </svg>
@@ -154,78 +153,89 @@ const route = useRoute()
 
 // ✅ State - BUY PAGE ONLY
 const properties = ref([])
-const pending = ref(false)
+const pending = ref(true)
 const error = ref(null)
+const totalResults = ref(0)
 const currentPage = ref(1)
 const pageSize = 12
-const totalResults = ref(0)
 const sortBy = ref('newest')
 
-// ✅ Transform backend data to frontend format - FOR SALE
-const transformProperty = (property) => ({
-  id: property?._id,
-  _id: property?._id,
-  title: property?.title,
-  name: property?.title,
-  image: property?.images?.[0] || property?.image || 'https://picsum.photos/600/400',
-  images: property?.images || [],
-  price: property?.price,
-  location: property?.location?.district ?
-    `${property?.location.district}, ${property?.location.city}` :
-    (property?.location?.address || property?.location?.city || ''),
-  bedrooms: property?.details?.bedrooms || property?.bedrooms || 0,
-  bathrooms: property?.details?.bathrooms || property?.bathrooms || 0,
-  area: property?.details?.area || property?.area || 0,
-  type: property?.type || 'sale', // ✅ SALE TYPE
-  category: property?.category,
-  description: property?.description,
-  featured: property?.featured || false,
-  status: property?.status,
-  createdAt: property?.createdAt,
-  views: property?.views || 0
-})
+// ✅ Transform function for properties
+const transformProperty = (property) => {
+  if (!property?._id && !property?.id) {
+    console.warn('⚠️ Property missing ID:', property)
+    return null
+  }
 
-// ✅ Load properties function - FOR SALE
+  return {
+    id: String(property._id || property.id),
+    _id: String(property._id || property.id),
+    title: property.title || property.name || 'Bất động sản',
+    name: property.name || property.title || 'Bất động sản',
+    image: property.images?.[0] || property.image || 'https://picsum.photos/600/400',
+    images: property.images || [],
+    price: Number(property.price || 0),
+    location: property.location?.district 
+      ? `${property.location.district}, ${property.location.city}`
+      : property.location?.address || property.location?.city || property.location || 'Chưa cập nhật',
+    type: property.type || 'sale',
+    bedrooms: Number(property.details?.bedrooms || property.bedrooms || 0),
+    bathrooms: Number(property.details?.bathrooms || property.bathrooms || 0),
+    area: Number(property.details?.area || property.area || 0),
+    featured: Boolean(property.isFeatured || property.featured),
+    status: property.status || 'active',
+    description: property.description || '',
+    views: Number(property.views || 0),
+    createdAt: property.createdAt,
+    publishedAt: property.publishedAt,
+  }
+}
+
+// ✅ Load properties function - FIXED
 const loadProperties = async () => {
   try {
-    console.log('[buy/index.vue] loadProperties - Current Filters:', JSON.stringify(filters));
     pending.value = true
     error.value = null
-
-    const filters = {
+    
+    console.log('🏢 [BuyPage] Loading sale properties...')
+    console.log('🏢 [BuyPage] Current params:', {
       page: currentPage.value,
       limit: pageSize,
       sort: sortBy.value,
-      ...route.query
+      keyword: route.query.keyword,
+      location: route.query.location,
+      priceRange: route.query.priceRange
+    })
+
+    const params = {
+      page: currentPage.value,
+      limit: pageSize,
+      sort: sortBy.value,
+      ...(route.query.keyword && { keyword: route.query.keyword }),
+      ...(route.query.location && { location: route.query.location }),
+      ...(route.query.priceRange && { priceRange: route.query.priceRange })
     }
 
-    console.log('🔄 Loading SALE properties with filters:', filters)
+    const response = await getPropertiesForSale(params)
+    console.log('🏢 [BuyPage] API Response:', response)
 
-    const response = await getPropertiesForSale(pageSize, filters) // ✅ FOR SALE
-    console.log('[buy/index.vue] loadProperties - Raw API Response:', JSON.stringify(response));
-
-    console.log('📦 SALE API Response:', response)
-
-    if (response.success && response.data) {
-      properties.value = response.data.map(transformProperty)
-      console.log('[buy/index.vue] loadProperties - Transformed Properties:', JSON.stringify(properties.value.slice(0, 2)));
-      totalResults.value = response.pagination?.total || response.total || response.data.length
-      console.log('[buy/index.vue] loadProperties - Total Results:', totalResults.value);
-    } else if (response.data) {
-      properties.value = response.data.map(transformProperty)
-      console.log('[buy/index.vue] loadProperties - Transformed Properties:', JSON.stringify(properties.value.slice(0, 2)));
+    if (response?.success && response?.data) {
+      const transformedProperties = response.data.map(transformProperty).filter(Boolean)
+      properties.value = transformedProperties
+      totalResults.value = response.total || response.data.length
+      console.log(`🏢 [BuyPage] Loaded ${transformedProperties.length} properties`)
+      console.log('🏢 [BuyPage] First property:', transformedProperties[0])
+    } else if (response?.data && Array.isArray(response.data)) {
+      const transformedProperties = response.data.map(transformProperty).filter(Boolean)
+      properties.value = transformedProperties
       totalResults.value = response.data.length
-      console.log('[buy/index.vue] loadProperties - Total Results:', totalResults.value);
+      console.log(`🏢 [BuyPage] Loaded ${transformedProperties.length} properties (fallback)`)
     } else {
-      throw new Error('No data received from API')
+      console.warn('🏢 [BuyPage] No properties data received:', response)
+      properties.value = []
+      totalResults.value = 0
     }
-
-    console.log(`✅ Loaded ${properties.value.length} SALE properties`)
-    console.log('🏠 SALE Properties data:', properties.value)
-
   } catch (err) {
-    console.error('[buy/index.vue] loadProperties - Caught Error:', JSON.stringify(err.message));
-    console.log('[buy/index.vue] loadProperties - Error ref value:', JSON.stringify(error.value));
     console.error('❌ Error fetching SALE properties:', err)
     error.value = err.message || 'Lỗi khi tải dữ liệu'
     properties.value = []
@@ -235,7 +245,7 @@ const loadProperties = async () => {
   }
 }
 
-// ✅ Computed - SINGLE DECLARATIONS ONLY
+// ✅ Computed properties
 const filteredProperties = computed(() => {
   console.log('🔍 Filtering SALE properties, total:', properties.value.length)
   return properties.value
@@ -262,16 +272,23 @@ const visiblePages = computed(() => {
   return pages
 })
 
-// ✅ Methods
+// ✅ Functions
+const onSearch = (searchData) => {
+  console.log('🔍 [BuyPage] Search triggered:', searchData)
+  
+  const queryParams = new URLSearchParams()
+  if (searchData.keyword) queryParams.set('keyword', searchData.keyword)
+  if (searchData.location) queryParams.set('location', searchData.location)
+  if (searchData.priceRange) queryParams.set('priceRange', searchData.priceRange)
+
+  const queryString = queryParams.toString()
+  navigateTo(`/buy${queryString ? '?' + queryString : ''}`)
+}
+
 const goToPage = (page) => {
   currentPage.value = page
   loadProperties()
-}
-
-const onSearch = (params) => {
-  console.log('🔎 SALE search triggered:', params)
-  currentPage.value = 1
-  loadProperties()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 const refresh = () => {
@@ -282,16 +299,17 @@ const refresh = () => {
 watch(() => route.query, () => {
   currentPage.value = 1
   loadProperties()
-}, { deep: true })
+}, { immediate: false })
 
-watch(sortBy, () => {
-  currentPage.value = 1
-  loadProperties()
-})
-
-// ✅ Initialize
+// ✅ Load data on mount
 onMounted(() => {
-  console.log('🏠 BUY page mounted')
+  console.log('🏢 [BuyPage] Component mounted')
   loadProperties()
 })
 </script>
+
+<style scoped>
+.font-inter {
+  font-family: "Inter", sans-serif;
+}
+</style>

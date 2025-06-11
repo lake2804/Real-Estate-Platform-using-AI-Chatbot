@@ -18,16 +18,52 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://hom02042005:0NCozkL3Aq4gHyEb@realestatedb.uokc8vu.mongodb.net/?retryWrites=true&w=majority&appName=RealEstateDB', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+// MongoDB connection với options được cập nhật
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/realestate'
+
+mongoose.connect(mongoUri, {
+  // Chỉ giữ lại các options được hỗ trợ
+  serverSelectionTimeoutMS: 30000, // Timeout khi chọn server
+  socketTimeoutMS: 45000,          // Timeout cho socket
+  maxPoolSize: 10,                 // Số lượng connection tối đa
+  minPoolSize: 2,                  // Số lượng connection tối thiểu
+  maxIdleTimeMS: 30000,           // Thời gian idle tối đa
+  retryWrites: true,              // Retry writes
+  w: 'majority'                   // Write concern
 })
 .then(() => {
-  console.log('✅ MongoDB connected successfully')
+  console.log('✅ Connected to MongoDB Atlas successfully!')
+  console.log('🌐 Database:', mongoose.connection.db.databaseName)
+  console.log('🔗 Connection host:', mongoose.connection.host)
 })
 .catch((err) => {
-  console.error('❌ MongoDB connection error:', err)
+  console.error('❌ MongoDB Atlas connection error:', err.message)
+  process.exit(1)
+})
+
+// Connection event listeners
+mongoose.connection.on('connected', () => {
+  console.log('📡 Mongoose connected to MongoDB')
+})
+
+mongoose.connection.on('error', (err) => {
+  console.error('❌ Mongoose connection error:', err)
+})
+
+mongoose.connection.on('disconnected', () => {
+  console.log('📡 Mongoose disconnected from MongoDB')
+})
+
+// Handle process termination
+process.on('SIGINT', async () => {
+  try {
+    await mongoose.connection.close()
+    console.log('📡 MongoDB connection closed through app termination')
+    process.exit(0)
+  } catch (error) {
+    console.error('❌ Error closing MongoDB connection:', error)
+    process.exit(1)
+  }
 })
 
 // Health check
@@ -48,7 +84,12 @@ app.get('/api/health', async (req, res) => {
     res.json({
       status: 'OK',
       timestamp: new Date().toISOString(),
-      mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+      mongodb: {
+        status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        host: mongoose.connection.host,
+        database: mongoose.connection.db?.databaseName,
+        readyState: mongoose.connection.readyState
+      },
       counts: {
         users: userCount,
         properties: propertyCount,
@@ -58,10 +99,14 @@ app.get('/api/health', async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Health check error:', error)
+    console.error('❌ Health check error:', error)
     res.status(500).json({
       status: 'ERROR',
-      error: error.message
+      error: error.message,
+      mongodb: {
+        status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        readyState: mongoose.connection.readyState
+      }
     })
   }
 })
