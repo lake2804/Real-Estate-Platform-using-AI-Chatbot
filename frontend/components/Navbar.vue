@@ -127,16 +127,24 @@
         >
           Liên hệ
         </NuxtLink>
+
+        <NuxtLink
+          to="/upload"
+          :class="[
+            'font-inter font-medium text-[16px] cursor-pointer pb-1 pt-[5px] border-b-2 transition-colors',
+            route.path === '/upload'
+              ? 'text-[#F62E56] border-[#F62E56]'
+              : 'text-[#1C1917] border-transparent hover:text-[#F62E56]',
+          ]"
+        >
+          Đăng tin
+        </NuxtLink>
       </div>
 
       <!-- Authentication/Profile -->
       <div class="relative flex items-center flex-shrink-0 gap-6 ml-8">
         <!-- Show login/register when NOT authenticated -->
-        <template v-if="!currentUser">
-          <!-- Debug Info (remove in production) -->
-          <div class="text-xs text-gray-500">
-            Debug: {{ currentUser ? 'Logged In' : 'Not Logged In' }}
-          </div>
+        <template v-if="!isAuthenticated">
 
           <!-- Login Button -->
           <NuxtLink
@@ -159,10 +167,6 @@
 
         <!-- Show profile when authenticated -->
         <template v-else>
-          <!-- Debug Info (remove in production) -->
-          <div class="text-xs text-gray-500">
-            Debug: {{ currentUser.name || currentUser.email }}
-          </div>
 
           <!-- Profile Dropdown -->
           <div class="relative">
@@ -352,28 +356,32 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "~/stores/auth";
 
+// ✅ FIX: Use auth store properly
 const authStore = useAuthStore();
 const currentUser = computed(() => authStore.currentUser);
+const isAuthenticated = computed(() => authStore.isAuthenticated);
 
 const isScrolled = ref(false);
 const showDropdown = ref(false);
+const showDebug = ref(true); // Set to false in production
 const router = useRouter();
 const route = useRoute();
 const profileBtn = ref(null);
 const dropdownMenu = ref(null);
-
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 2;
 };
 
 function logout() {
+  console.log('🚪 Navbar logout clicked');
   authStore.logout();
   showDropdown.value = false;
+  router.push('/');
 }
 
 function toggleDropdown() {
@@ -392,8 +400,10 @@ function handleClickOutside(e) {
 }
 
 onMounted(() => {
-
-
+  // ✅ FIX: Initialize auth when navbar mounts
+  console.log('🔄 Navbar mounted, initializing auth...');
+  authStore.initAuth();
+  
   window.addEventListener("scroll", handleScroll);
   document.addEventListener("click", handleClickOutside);
 });
@@ -403,9 +413,13 @@ onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside);
 });
 
-// Watch currentUser changes for debugging
-watch(currentUser, (newUser) => {
-}, { immediate: true })
+// ✅ FIX: Watch auth changes for debugging
+watch([isAuthenticated, currentUser], ([auth, user]) => {
+  console.log('🔍 Navbar auth state changed:', { 
+    isAuthenticated: auth, 
+    user: user?.name || user?.email || 'None' 
+  });
+}, { immediate: true });
 </script>
 
 <style scoped>

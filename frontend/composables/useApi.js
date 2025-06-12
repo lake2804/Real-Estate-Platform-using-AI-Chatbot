@@ -1,5 +1,6 @@
 export const useApi = () => {
   const config = useRuntimeConfig()
+  const baseURL = config.public.apiBase
 
   // ✅ FIXED: Force the correct API base URL
   const apiBase = 'http://localhost:4000/api'
@@ -62,6 +63,53 @@ export const useApi = () => {
       }
     }
   })
+
+  // ✅ ADD: Create property
+  const createProperty = async (propertyData) => {
+    try {
+      console.log('📤 Creating property:', propertyData)
+      
+      const response = await $fetch(`${baseURL}/properties`, {
+        method: 'POST',
+        body: propertyData,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      
+      console.log('✅ Property created:', response)
+      return response
+      
+    } catch (error) {
+      console.error('❌ Create property error:', error)
+      throw error
+    }
+  }
+
+  // ✅ ADD: Upload images
+  const uploadImages = async (files) => {
+    try {
+      const formData = new FormData()
+      
+      files.forEach((file, index) => {
+        formData.append(`images`, file)
+      })
+      
+      const response = await $fetch(`${baseURL}/upload/images`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      
+      return response
+      
+    } catch (error) {
+      console.error('❌ Upload images error:', error)
+      throw error
+    }
+  }
 
   return {
     $api,
@@ -202,6 +250,9 @@ export const useApi = () => {
         console.error('❌ Error getting popular searches:', error)
         return { success: false, data: [], error: error.message }
       }
-    }
+    },
+
+    createProperty,
+    uploadImages
   }
 }

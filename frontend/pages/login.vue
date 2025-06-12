@@ -174,6 +174,7 @@ definePageMeta({
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 // Form data
 const form = ref({
@@ -195,33 +196,13 @@ const handleLogin = async () => {
   console.log('🔐 Login form submitted')
   
   try {
-    const result = await authStore.login({
-      email: form.value.email,
-      password: form.value.password
-    })
-
-    if (result.success) {
-      console.log('✅ Login successful, redirecting...')
-      
-      // Set redirecting state
-      isRedirecting.value = true
-      
-      // Wait a moment then redirect
-      setTimeout(async () => {
-        try {
-          await router.push('/')
-          console.log('🏠 Redirected to home page')
-        } catch (navError) {
-          console.error('❌ Navigation error:', navError)
-          // Fallback: force page reload
-          window.location.href = '/'
-        }
-      }, 1500)
-      
-    } else {
-      console.error('❌ Login failed:', result.message)
-      isRedirecting.value = false
-    }
+    await authStore.login(form)
+    
+    // Check for redirect URL
+    const redirectTo = route.query.redirect || '/'
+    console.log('✅ Login successful, redirecting to:', redirectTo)
+    
+    router.push(redirectTo)
   } catch (error) {
     console.error('❌ Login error:', error)
     isRedirecting.value = false
