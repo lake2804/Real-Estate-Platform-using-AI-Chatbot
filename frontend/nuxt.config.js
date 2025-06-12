@@ -5,14 +5,24 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-06-07",
   devtools: { enabled: true },
 
-  css: ["~/assets/css/main.css"],
-
   runtimeConfig: {
     public: {
       // ✅ CRITICAL: Make sure this includes /api
       apiBase: "http://localhost:4000/api",
     },
   },
+
+  // Add proxy for development
+  nitro: {
+    devProxy: {
+      '/api/chatbot': {
+        target: 'http://localhost:4000/api/chatbot',
+        changeOrigin: true
+      }
+    }
+  },
+
+  css: ["~/assets/css/main.css"],
 
   modules: ["@pinia/nuxt"],
 

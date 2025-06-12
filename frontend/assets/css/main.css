@@ -1,3 +1,40 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Quicksand:wght@300..700&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 
-@import "tailwindcss"
+@import "tailwindcss";
+
+/* Custom utilities for chatbot */
+@layer utilities {
+  .w-14 {
+    width: 3.5rem;
+  }
+  
+  .h-14 {
+    height: 3.5rem;
+  }
+  
+  .w-96 {
+    width: 24rem;
+  }
+  
+  .h-500 {
+    height: 500px;
+  }
+  
+  .max-w-80 {
+    max-width: 80%;
+  }
+}
+
+/* Custom animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

@@ -122,6 +122,12 @@ app.use('/api/featured-projects', require('./routes/featuredProjects'))
 app.use('/api/news', require('./routes/news'))
 app.use('/api/seed', require('./routes/seeder'))
 
+// Import chatbot routes
+const chatbotRoutes = require('./routes/chatbot.routes');
+
+// Add chatbot routes
+app.use('/api/chatbot', chatbotRoutes);
+
 console.log('✅ All routes registered')
 
 // 404 handler
