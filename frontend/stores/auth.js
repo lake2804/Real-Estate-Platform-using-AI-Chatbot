@@ -4,226 +4,232 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
     token: null,
+    isLoggedIn: false,
     isLoading: false,
-    error: null,
-    initialized: false,
-    redirectTo: null
+    error: null
   }),
 
   getters: {
-    isAuthenticated: (state) => !!state.token && !!state.user,
-    currentUser: (state) => state.user,
-    userRole: (state) => state.user?.role || 'user',
     isAdmin: (state) => state.user?.role === 'admin',
     isAgent: (state) => state.user?.role === 'agent',
-    isUser: (state) => state.user?.role === 'user'
+    isUser: (state) => state.user?.role === 'user',
+    userInitials: (state) => {
+      if (!state.user?.fullName) return 'U'
+      return state.user.fullName.split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+    }
   },
 
   actions: {
-    // ✅ Set redirect destination
-    setRedirectTo(path) {
-      // Only set redirect for protected pages, not for login/register
-      if (path && !path.includes('/login') && !path.includes('/register')) {
-        this.redirectTo = path
+    // Initialize auth from localStorage
+    initAuth() {
+      console.log('🔐 Initializing auth...')
+      
+      if (process.client) {
+        try {
+          const token = localStorage.getItem('token')
+          const user = localStorage.getItem('user')
+          
+          if (token && user) {
+            this.token = token
+            this.user = JSON.parse(user)
+            this.isLoggedIn = true
+            console.log('✅ Auth restored from localStorage:', this.user.email)
+          } else {
+            console.log('ℹ️ No stored auth data found')
+          }
+        } catch (error) {
+          console.error('❌ Error restoring auth:', error)
+          this.clearAuth()
+        }
       }
     },
 
-    // ✅ Get and clear redirect destination
-    getAndClearRedirect() {
-      const redirect = this.redirectTo || '/'
-      this.redirectTo = null
-      return redirect
-    },
-
-    // ✅ Smart redirect after login
-    getPostLoginRedirect() {
-      // Get intended destination or default to home
-      const intended = this.getAndClearRedirect()
-      
-      // Don't redirect to auth pages
-      if (intended.includes('/login') || intended.includes('/register')) {
-        return '/'
-      }
-      
-      return intended
-    },
-
+    // Login action with better error handling
     async login(credentials) {
-      console.log('🔐 AuthStore login attempt:', credentials.email)
+      // Prevent concurrent login attempts
+      if (this.isLoading) {
+        console.log('⚠️ Login already in progress')
+        return { success: false, message: 'Login already in progress' }
+      }
+
+      console.log('🔐 Login attempt:', { email: credentials.email })
       
       this.isLoading = true
       this.error = null
-      
+
       try {
-        const { $api } = useApi()
-        
-        const response = await $api('/auth/login', {
+        const response = await $fetch('/api/auth/login', {
           method: 'POST',
-          body: credentials
+          body: {
+            email: credentials.email.trim(),
+            password: credentials.password
+          }
         })
-        
-        if (response.success && response.data) {
-          this.token = response.data.token
+
+        console.log('✅ Login response:', { 
+          success: response.success, 
+          user: response.data?.user?.email 
+        })
+
+        if (response.success && response.data?.user && response.data?.token) {
+          // Set auth data
           this.user = response.data.user
+          this.token = response.data.token
+          this.isLoggedIn = true
+
+          // Store in localStorage
+          if (process.client) {
+            localStorage.setItem('token', response.data.token)
+            localStorage.setItem('user', JSON.stringify(response.data.user))
+          }
+
+          console.log('🎉 Login successful:', this.user.fullName)
           
-          // Save to cookies
-          const tokenCookie = useCookie('auth-token', {
-            default: () => null,
-            maxAge: 60 * 60 * 24 * 7,
-            httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax'
-          })
-          
-          const userCookie = useCookie('auth-user', {
-            default: () => null,
-            maxAge: 60 * 60 * 24 * 7,
-            httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax'
-          })
-          
-          tokenCookie.value = this.token
-          userCookie.value = JSON.stringify(this.user)
-          
-          console.log('✅ Login successful, user role:', this.user.role)
-          
-          // Get redirect destination
-          const redirectPath = this.getPostLoginRedirect()
-          console.log('🔄 Redirecting to:', redirectPath)
-          
-          // Use navigateTo with replace to prevent back button issues
-          await navigateTo(redirectPath, { replace: true })
-          
+          return { 
+            success: true, 
+            message: response.message || 'Đăng nhập thành công!',
+            user: this.user
+          }
         } else {
           throw new Error(response.message || 'Đăng nhập thất bại')
         }
-        
+
       } catch (error) {
         console.error('❌ Login error:', error)
-        this.error = error.data?.message || error.message || 'Đăng nhập thất bại'
-        throw error
+        
+        const errorMessage = error.data?.message || error.message || 'Lỗi kết nối. Vui lòng thử lại.'
+        this.error = errorMessage
+        
+        // Clear any partial auth state
+        this.clearAuth()
+        
+        return { 
+          success: false, 
+          message: errorMessage 
+        }
+        
       } finally {
         this.isLoading = false
       }
     },
 
+    // Register action
     async register(userData) {
-      console.log('📝 AuthStore register attempt:', userData.email)
+      if (this.isLoading) {
+        return { success: false, message: 'Registration already in progress' }
+      }
+
+      console.log('📝 Register attempt:', { email: userData.email, role: userData.role })
       
       this.isLoading = true
       this.error = null
-      
+
       try {
-        const { $api } = useApi()
-        
-        const response = await $api('/auth/register', {
+        const response = await $fetch('/api/auth/register', {
           method: 'POST',
-          body: userData
+          body: {
+            fullName: userData.fullName.trim(),
+            email: userData.email.trim(),
+            password: userData.password,
+            phone: userData.phone?.trim() || '',
+            role: userData.role || 'user'
+          }
         })
-        
-        if (response.success && response.data) {
-          this.token = response.data.token
+
+        console.log('✅ Register response:', { success: response.success })
+
+        if (response.success && response.data?.user && response.data?.token) {
+          // Set auth data
           this.user = response.data.user
-          
-          // Save to cookies
-          const tokenCookie = useCookie('auth-token', {
-            default: () => null,
-            maxAge: 60 * 60 * 24 * 7,
-            httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax'
-          })
-          
-          const userCookie = useCookie('auth-user', {
-            default: () => null,
-            maxAge: 60 * 60 * 24 * 7,
-            httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax'
-          })
-          
-          tokenCookie.value = this.token
-          userCookie.value = JSON.stringify(this.user)
-          
-          console.log('✅ Register successful, redirecting to home...')
-          
-          // New users always go to home page
-          await navigateTo('/', { replace: true })
-          
+          this.token = response.data.token
+          this.isLoggedIn = true
+
+          // Store in localStorage
+          if (process.client) {
+            localStorage.setItem('token', response.data.token)
+            localStorage.setItem('user', JSON.stringify(response.data.user))
+          }
+
+          console.log('🎉 Registration successful:', this.user.fullName)
+          return { success: true, message: response.message }
         } else {
           throw new Error(response.message || 'Đăng ký thất bại')
         }
-        
+
       } catch (error) {
-        console.error('❌ Register error:', error)
-        this.error = error.data?.message || error.message || 'Đăng ký thất bại'
-        throw error
+        console.error('❌ Registration error:', error)
+        
+        const errorMessage = error.data?.message || error.message || 'Lỗi kết nối. Vui lòng thử lại.'
+        this.error = errorMessage
+        
+        return { 
+          success: false, 
+          message: errorMessage 
+        }
+        
       } finally {
         this.isLoading = false
       }
     },
 
-    async logout() {
-      console.log('🚪 AuthStore logout')
+    // Logout action
+    logout() {
+      console.log('👋 Logging out user:', this.user?.email)
       
-      try {
-        // Clear state
-        this.user = null
-        this.token = null
-        this.error = null
-        this.redirectTo = null
-        
-        // Clear cookies
-        const tokenCookie = useCookie('auth-token')
-        const userCookie = useCookie('auth-user')
-        
-        tokenCookie.value = null
-        userCookie.value = null
-        
-        console.log('✅ Logout completed, redirecting to home...')
-        
-        // Always redirect to home page after logout
-        await navigateTo('/', { replace: true })
-        
-      } catch (error) {
-        console.error('❌ Logout error:', error)
+      this.clearAuth()
+      
+      // Navigate to home page
+      if (process.client) {
+        setTimeout(() => {
+          navigateTo('/')
+        }, 100)
       }
     },
 
-    async restoreAuth() {
-      if (this.initialized) return
-      
-      console.log('🔄 Restoring auth from cookies...')
-      
-      try {
-        const tokenCookie = useCookie('auth-token')
-        const userCookie = useCookie('auth-user')
-        
-        if (tokenCookie.value && userCookie.value) {
-          this.token = tokenCookie.value
-          this.user = JSON.parse(userCookie.value)
-          console.log('✅ Auth restored from cookies, user role:', this.user?.role)
-        }
-      } catch (error) {
-        console.error('❌ Error restoring auth:', error)
-        this.clearAuth()
-      } finally {
-        this.initialized = true
-      }
-    },
-
+    // Clear auth data
     clearAuth() {
       this.user = null
       this.token = null
+      this.isLoggedIn = false
       this.error = null
-      this.redirectTo = null
-      
-      const tokenCookie = useCookie('auth-token')
-      const userCookie = useCookie('auth-user')
-      
-      tokenCookie.value = null
-      userCookie.value = null
+
+      if (process.client) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+      }
+    },
+
+    // Get current user profile
+    async fetchProfile() {
+      if (!this.token) return
+
+      try {
+        const response = await $fetch('/api/auth/me', {
+          headers: {
+            Authorization: `Bearer ${this.token}`
+          }
+        })
+
+        if (response.success && response.data?.user) {
+          this.user = response.data.user
+          
+          // Update localStorage
+          if (process.client) {
+            localStorage.setItem('user', JSON.stringify(response.data.user))
+          }
+        }
+
+      } catch (error) {
+        console.error('❌ Profile fetch error:', error)
+        
+        // If token is invalid, logout
+        if (error.status === 401) {
+          this.logout()
+        }
+      }
     }
   }
 })

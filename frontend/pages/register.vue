@@ -1,220 +1,244 @@
 <template>
-  <client-only>
-    <div class="fixed inset-0 flex bg-[#f5f8ff]">
-      <!-- Banner trái nhỏ, nền đỏ -->
-      <div class="items-center justify-center hidden w-2/5 h-full bg-gradient-to-br from-[#F62E56] to-[#7b1e3a] lg:flex">
-        <div class="w-[90%] h-[80%] rounded-[48px] flex flex-col justify-between p-10 text-white shadow-2xl bg-gradient-to-br from-[#F62E56] to-[#7b1e3a]">
-          <div>
-            <h2 class="mb-4 text-4xl font-bold leading-tight">Join<br />Nhavui<br />Today</h2>
-          </div>
-          <div>
-            <div class="flex items-center gap-2 mb-2">
-              <svg width="32" height="32" fill="none" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#fff" fill-opacity="0.1"/><path d="M16 8a8 8 0 100 16 8 8 0 000-16zm0 14.4A6.4 6.4 0 1116 9.6a6.4 6.4 0 010 12.8z" fill="#fff"/></svg>
-              <span class="text-lg font-bold">N</span>
-            </div>
-            <p class="text-sm opacity-80">Create your account and discover<br />the best real estate deals</p>
-          </div>
-        </div>
+  <div class="flex items-center justify-center min-h-screen px-4 py-12 bg-gradient-to-br from-green-50 to-blue-100 sm:px-6 lg:px-8">
+    <div class="w-full max-w-md space-y-8">
+      <!-- Header -->
+      <div class="text-center">
+        <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+          🏠 Đăng ký
+        </h2>
+        <p class="mt-2 text-sm text-gray-600">
+          Tạo tài khoản mới
+        </p>
       </div>
-      <!-- Form đăng ký -->
-      <div class="flex flex-col items-center justify-center w-full h-full lg:w-3/5">
-        <div class="relative flex flex-col justify-center w-full h-full px-2 py-8 bg-white rounded-none shadow-xl lg:rounded-3xl lg:px-16 lg:py-16">
-          <button
-            class="absolute text-5xl text-gray-400 top-6 right-6 hover:text-gray-600"
-            @click="goHome"
-            aria-label="Đóng"
-          >
-            &times;
-          </button>
-          <!-- Title & Description -->
-          <div class="mb-8 max-w-[400px] w-full mx-auto">
-            <h1 class="mb-2 text-3xl font-bold text-[#1C1917] flex items-center gap-2">
-              <span class="text-[#F62E56]">Đăng ký</span>
-              <span class="text-lg">🚀</span>
-            </h1>
-            <p class="text-[#6B7280] text-base">
-              Tạo tài khoản mới để khám phá các cơ hội bất động sản tuyệt vời.
+
+      <!-- Form -->
+      <form @submit.prevent="handleRegister" class="mt-8 space-y-6">
+        <div class="p-8 space-y-6 bg-white shadow-lg rounded-xl">
+          <!-- Full Name -->
+          <div>
+            <label for="fullName" class="block text-sm font-medium text-gray-700">
+              Họ và tên *
+            </label>
+            <input
+              id="fullName"
+              v-model="form.fullName"
+              type="text"
+              required
+              class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              placeholder="Nguyễn Văn A"
+              :disabled="authStore.isLoading"
+            />
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700">
+              Email *
+            </label>
+            <input
+              id="email"
+              v-model="form.email"
+              type="email"
+              required
+              class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              placeholder="your@email.com"
+              :disabled="authStore.isLoading"
+            />
+          </div>
+
+          <!-- Phone -->
+          <div>
+            <label for="phone" class="block text-sm font-medium text-gray-700">
+              Số điện thoại
+            </label>
+            <input
+              id="phone"
+              v-model="form.phone"
+              type="tel"
+              class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              placeholder="+84901234567"
+              :disabled="authStore.isLoading"
+            />
+          </div>
+
+          <!-- Role -->
+          <div>
+            <label for="role" class="block text-sm font-medium text-gray-700">
+              Vai trò
+            </label>
+            <select
+              id="role"
+              v-model="form.role"
+              class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              :disabled="authStore.isLoading"
+            >
+              <option value="user">👤 Người dùng</option>
+              <option value="agent">🏢 Môi giới</option>
+            </select>
+          </div>
+
+          <!-- Password -->
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700">
+              Mật khẩu *
+            </label>
+            <div class="relative">
+              <input
+                id="password"
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'"
+                required
+                minlength="6"
+                class="block w-full px-3 py-2 pr-10 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="••••••••"
+                :disabled="authStore.isLoading"
+              />
+              <button
+                type="button"
+                @click="showPassword = !showPassword"
+                class="absolute inset-y-0 right-0 flex items-center pr-3"
+              >
+                <svg v-if="showPassword" class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                </svg>
+                <svg v-else class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+            </div>
+            <p class="mt-1 text-sm text-gray-500">
+              Tối thiểu 6 ký tự
             </p>
           </div>
 
-          <!-- Form đăng ký -->
-          <form @submit.prevent="handleRegister" class="max-w-[400px] w-full mx-auto space-y-6">
-            <!-- Full Name Field -->
-            <div>
-              <label for="fullName" class="block text-sm font-medium text-[#1C1917] mb-2">
-                Họ và tên *
-              </label>
-              <input
-                id="fullName"
-                v-model="fullName"
-                type="text"
-                required
-                class="w-full px-4 py-3 border border-[#E4E4E7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F62E56] focus:border-transparent text-base"
-                placeholder="Nguyen Van A"
-              />
-            </div>
-
-            <!-- Email Field -->
-            <div>
-              <label for="email" class="block text-sm font-medium text-[#1C1917] mb-2">
-                Email *
-              </label>
-              <input
-                id="email"
-                v-model="email"
-                type="email"
-                required
-                autocomplete="email"
-                class="w-full px-4 py-3 border border-[#E4E4E7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F62E56] focus:border-transparent text-base"
-                placeholder="your@email.com"
-              />
-            </div>
-
-            <!-- Password Field -->
-            <div>
-              <label for="password" class="block text-sm font-medium text-[#1C1917] mb-2">
-                Mật khẩu *
-              </label>
-              <div class="relative">
-                <input
-                  id="password"
-                  v-model="password"
-                  :type="showPassword ? 'text' : 'password'"
-                  required
-                  autocomplete="new-password"
-                  class="w-full px-4 py-3 border border-[#E4E4E7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F62E56] focus:border-transparent text-base pr-12"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  @click="showPassword = !showPassword"
-                  class="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6B7280] hover:text-[#1C1917]"
-                >
-                  {{ showPassword ? '🙈' : '👁️' }}
-                </button>
-              </div>
-              <p class="mt-1 text-xs text-gray-500">Tối thiểu 6 ký tự</p>
-            </div>
-
-            <!-- Phone Field -->
-            <div>
-              <label for="phone" class="block text-sm font-medium text-[#1C1917] mb-2">
-                Số điện thoại
-              </label>
-              <input
-                id="phone"
-                v-model="phone"
-                type="tel"
-                class="w-full px-4 py-3 border border-[#E4E4E7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F62E56] focus:border-transparent text-base"
-                placeholder="0123456789"
-              />
-            </div>
-
-
-            <!-- Error Message -->
-            <div v-if="authStore.error" class="p-3 border border-red-200 rounded-lg bg-red-50">
-              <p class="text-sm text-red-600">{{ authStore.error }}</p>
-            </div>
-
-            <!-- Register Button -->
-            <button
-              type="submit"
+          <!-- Confirm Password -->
+          <div>
+            <label for="confirmPassword" class="block text-sm font-medium text-gray-700">
+              Xác nhận mật khẩu *
+            </label>
+            <input
+              id="confirmPassword"
+              v-model="form.confirmPassword"
+              type="password"
+              required
+              class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              :class="{'border-red-300': form.password && form.confirmPassword && form.password !== form.confirmPassword}"
+              placeholder="••••••••"
               :disabled="authStore.isLoading"
-              class="w-full bg-[#F62E56] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#d9254a] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {{ authStore.isLoading ? 'Đang đăng ký...' : 'Đăng ký' }}
-            </button>
+            />
+            <p v-if="form.password && form.confirmPassword && form.password !== form.confirmPassword" class="mt-1 text-sm text-red-600">
+              Mật khẩu không khớp
+            </p>
+          </div>
 
-            <!-- Divider -->
-            <div class="relative">
-              <div class="absolute inset-0 flex items-center">
-                <div class="w-full border-t border-[#E4E4E7]"></div>
-              </div>
-              <div class="relative flex justify-center text-sm">
-                <span class="px-2 bg-white text-[#6B7280]">hoặc</span>
+          <!-- Error message -->
+          <div v-if="authStore.error" class="p-4 border border-red-200 rounded-lg bg-red-50">
+            <div class="flex">
+              <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+              <div class="ml-3">
+                <p class="text-sm text-red-800">{{ authStore.error }}</p>
               </div>
             </div>
+          </div>
 
-            <!-- Google Register Button -->
-            <button
-              type="button"
-              @click="signUpWithGoogle"
-              class="w-full flex items-center justify-center gap-3 bg-white border border-[#E4E4E7] text-[#1C1917] py-3 px-4 rounded-lg font-medium hover:bg-[#F9FAFB] transition-colors duration-200"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Sign up with Google
-            </button>
-          </form>
-          <p class="mt-6 text-sm text-center text-gray-500 md:text-base max-w-[400px] w-full mx-auto">
-            Already have an account?
-            <NuxtLink to="/login" class="text-[#F62E56] hover:underline ml-1">Sign in</NuxtLink>
-          </p>
+          <!-- Submit button -->
+          <button
+            type="submit"
+            :disabled="authStore.isLoading || !isFormValid"
+            class="flex justify-center w-full px-4 py-3 text-sm font-medium text-white transition-colors bg-green-600 border border-transparent rounded-lg shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg v-if="authStore.isLoading" class="w-5 h-5 mr-3 -ml-1 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ authStore.isLoading ? 'Đang đăng ký...' : 'Đăng ký' }}
+          </button>
+        </div>
+      </form>
+
+      <!-- Links -->
+      <div class="space-y-2 text-center">
+        <NuxtLink to="/login" class="font-medium text-green-600 hover:text-green-800">
+          Đã có tài khoản? Đăng nhập ngay
+        </NuxtLink>
+        <div>
+          <NuxtLink to="/" class="text-gray-600 hover:text-gray-800">
+            ← Về trang chủ
+          </NuxtLink>
         </div>
       </div>
     </div>
-  </client-only>
+  </div>
 </template>
 
 <script setup>
-console.log('🔧 Register page loading...')
-
 definePageMeta({
-  layout: 'auth',
-  middleware: 'guest'
+  layout: 'auth'
 })
-
-// Check if composables are available
-try {
-  const authStore = useAuthStore()
-  console.log('✅ AuthStore loaded in register:', !!authStore)
-} catch (error) {
-  console.error('❌ AuthStore error in register:', error)
-}
 
 const authStore = useAuthStore()
 const router = useRouter()
 
-const fullName = ref('')
-const email = ref('')
-const password = ref('')
-const phone = ref('')
+// Form data
+const form = ref({
+  fullName: '',
+  email: '',
+  phone: '',
+  password: '',
+  confirmPassword: '',
+  role: 'user'
+})
+
 const showPassword = ref(false)
 
-async function handleRegister() {
-  console.log('🔧 Register form submitted')
-  console.log('🔧 Data:', {
-    fullName: fullName.value,
-    email: email.value,
-    phone: phone.value
-  })
+// Form validation
+const isFormValid = computed(() => {
+  return form.value.fullName?.trim() &&
+         form.value.email?.trim() &&
+         form.value.password?.length >= 6 &&
+         form.value.password === form.value.confirmPassword
+})
+
+// Handle register
+const handleRegister = async () => {
+  console.log('📝 Register form submitted')
   
-  try {
-    await authStore.register({
-      fullName: fullName.value,
-      email: email.value,
-      password: password.value,
-      phone: phone.value || undefined
-    })
-    console.log('✅ Register completed successfully')
-  } catch (error) {
-    console.error('❌ Register failed:', error)
+  if (!isFormValid.value) {
+    console.warn('⚠️ Form validation failed')
+    return
+  }
+
+  const result = await authStore.register({
+    fullName: form.value.fullName,
+    email: form.value.email,
+    phone: form.value.phone,
+    password: form.value.password,
+    role: form.value.role
+  })
+
+  if (result.success) {
+    console.log('✅ Registration successful, redirecting...')
+    
+    // Show success message
+    ElMessage.success(result.message || 'Đăng ký thành công!')
+    
+    // Redirect to home or dashboard
+    setTimeout(() => {
+      router.push('/')
+    }, 1000)
+  } else {
+    console.error('❌ Registration failed:', result.message)
   }
 }
 
-function goHome() {
-  console.log('🔧 Going home from register...')
-  router.push('/')
-}
-
-function signUpWithGoogle() {
-  console.log('🔧 Google sign up clicked')
-  alert('Tính năng Google chưa tích hợp!')
-}
-
-console.log('✅ Register page script setup completed')
+// Check if already logged in
+onMounted(() => {
+  if (authStore.isLoggedIn) {
+    console.log('👤 User already logged in, redirecting...')
+    router.push('/')
+  }
+})
 </script>

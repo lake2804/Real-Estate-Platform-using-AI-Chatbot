@@ -15,8 +15,8 @@ embedding_dim = model.get_sentence_embedding_dimension()
 
 # Load FAISS index & metadata
 print("🔁 Loading FAISS index and metadata...")
-index = faiss.read_index("../BTTH2_code/faiss_index/index.faiss")
-with open("../BTTH2_code/faiss_index/metadata.json", "r", encoding="utf-8") as f:
+index = faiss.read_index("./faiss_index/index.faiss")
+with open("./faiss_index/metadata.json", "r", encoding="utf-8") as f:
     metadata = json.load(f)
 
 # FastAPI init
@@ -32,8 +32,8 @@ def input_gen(text: str, question: str) -> str:
         f"Dưới đây là một đoạn văn bản luật được trích ra từ tài liệu:\n{text}\n"
         f"Câu hỏi của người dùng:\n'{question}'\n"
         "Dựa trên nội dung trong đoạn văn bản ở trên, hãy đóng vai một chuyên gia pháp lý, "
-        "am hiểu sâu về Luật Đất đai Việt Nam năm 2013. Trả lời câu hỏi của người dùng dựa trên đoạn luật được cung cấp, "
-        "đảm bảo đúng ngữ cảnh, ngôn ngữ pháp lý rõ ràng, dễ hiểu. Yêu cầu trích dẫn phải bao gồm theo 'luật đất đai 2013', chương và điều. "
+        "am hiểu sâu về Luật Đất đai Việt Nam năm 2024. Trả lời câu hỏi của người dùng dựa trên đoạn luật được cung cấp, "
+        "đảm bảo đúng ngữ cảnh, ngôn ngữ pháp lý rõ ràng, dễ hiểu. Yêu cầu trích dẫn phải bao gồm theo 'luật đất đai 2024', chương và điều. "
         "Nếu không tìm thấy thông tin phù hợp, hãy trả lời 'Không tìm thấy thông tin trong đoạn trích.'"
     )
 
