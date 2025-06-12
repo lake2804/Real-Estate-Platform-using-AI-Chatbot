@@ -1,50 +1,67 @@
-﻿const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User.cjs');
+﻿const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+const User = require('../models/User.cjs') 
 
-console.log('🔧 Loading auth controller (CommonJS)...');
+console.log('🔧 Loading auth controller...')
 
 // Generate JWT token
 const generateToken = (userId) => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
   return jwt.sign(
     { userId: userId, id: userId },
     JWT_SECRET,
     { expiresIn: '7d' }
-  );
-};
+  )
+}
 
 // Register new user
 const register = async (req, res) => {
   try {
-    console.log(' Register endpoint called');
-    const { fullName, email, password, phone } = req.body;
+    console.log('📝 Register endpoint called with:', {
+      body: req.body,
+      hasFullName: !!req.body.fullName,
+      hasEmail: !!req.body.email,
+      hasPassword: !!req.body.password
+    })
 
+    const { fullName, email, password, phone } = req.body
+
+    // Validation
     if (!fullName || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Vui lòng nhập đầy đủ thông tin'
-      });
+        message: 'Vui lòng nhập đầy đủ thông tin bắt buộc'
+      })
     }
 
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mật khẩu phải có ít nhất 6 ký tự'
+      })
+    }
+
+    // Check if user exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() })
     if (existingUser) {
       return res.status(400).json({
         success: false,
         message: 'Email đã được sử dụng'
-      });
+      })
     }
 
+    // Create user (password will be hashed automatically by pre-save hook)
     const user = new User({
       fullName,
       email: email.toLowerCase(),
-      password,
-      phone
-    });
+      password, // Will be hashed by pre-save hook
+      phone: phone || ''
+    })
 
-    await user.save();
+    await user.save()
+    console.log('✅ User saved successfully:', user._id)
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id)
 
     res.status(201).json({
       success: true,
@@ -54,50 +71,72 @@ const register = async (req, res) => {
           id: user._id,
           fullName: user.fullName,
           email: user.email,
-          role: user.role
+          role: user.role,
+          avatar: user.avatar
         },
         token
       }
-    });
+    })
+
   } catch (error) {
-    console.error(' Registration error:', error);
+    console.error('❌ Registration error:', error)
     res.status(500).json({
       success: false,
-      message: 'Lỗi server khi đăng ký'
-    });
+      message: 'Lỗi server khi đăng ký',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    })
   }
-};
+}
 
 // Login user
 const login = async (req, res) => {
   try {
-    console.log(' Login endpoint called');
-    const { email, password } = req.body;
+    console.log('🔐 Login endpoint called with:', {
+      email: req.body.email,
+      hasPassword: !!req.body.password
+    })
 
+    const { email, password } = req.body
+
+    // Validation
     if (!email || !password) {
       return res.status(400).json({
         success: false,
         message: 'Vui lòng nhập email và mật khẩu'
-      });
+      })
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    // Find user with password field
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password')
+    console.log('🔍 User found:', !!user)
+    
     if (!user) {
       return res.status(401).json({
         success: false,
         message: 'Email hoặc mật khẩu không đúng'
-      });
+      })
     }
 
-    const isMatch = await user.comparePassword(password);
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Tài khoản đã bị khóa'
+      })
+    }
+
+    // Compare password
+    const isMatch = await user.comparePassword(password)
+    console.log('🔐 Password match:', isMatch)
+    
     if (!isMatch) {
       return res.status(401).json({
         success: false,
         message: 'Email hoặc mật khẩu không đúng'
-      });
+      })
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id)
 
     res.json({
       success: true,
@@ -107,31 +146,36 @@ const login = async (req, res) => {
           id: user._id,
           fullName: user.fullName,
           email: user.email,
-          role: user.role
+          role: user.role,
+          avatar: user.avatar,
+          phone: user.phone
         },
         token
       }
-    });
+    })
+
   } catch (error) {
-    console.error(' Login error:', error);
+    console.error('❌ Login error:', error)
     res.status(500).json({
       success: false,
-      message: 'Lỗi server khi đăng nhập'
-    });
+      message: 'Lỗi server khi đăng nhập',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    })
   }
-};
+}
 
-// Get user profile (renamed from getProfile to getMe for route compatibility)
+// Get user profile
 const getMe = async (req, res) => {
   try {
-    console.log(' GetMe endpoint called');
-    const user = await User.findById(req.user.userId || req.user.id).select('-password');
+    console.log('👤 GetMe endpoint called for user:', req.user.userId)
+    
+    const user = await User.findById(req.user.userId || req.user.id)
     
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'Không tìm thấy người dùng'
-      });
+      })
     }
 
     res.json({
@@ -142,37 +186,39 @@ const getMe = async (req, res) => {
           fullName: user.fullName,
           email: user.email,
           phone: user.phone,
-          role: user.role
+          role: user.role,
+          avatar: user.avatar
         }
       }
-    });
+    })
   } catch (error) {
-    console.error(' Get profile error:', error);
+    console.error('❌ Get profile error:', error)
     res.status(500).json({
       success: false,
-      message: 'Lỗi server'
-    });
+      message: 'Lỗi server',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    })
   }
-};
+}
 
 // Update user profile
 const updateProfile = async (req, res) => {
   try {
-    console.log(' UpdateProfile endpoint called');
-    const { fullName, phone } = req.body;
+    console.log('📝 UpdateProfile endpoint called')
+    const { fullName, phone } = req.body
     
-    const user = await User.findById(req.user.userId || req.user.id);
+    const user = await User.findById(req.user.userId || req.user.id)
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'Không tìm thấy người dùng'
-      });
+      })
     }
 
-    if (fullName) user.fullName = fullName;
-    if (phone) user.phone = phone;
+    if (fullName) user.fullName = fullName
+    if (phone) user.phone = phone
 
-    await user.save();
+    await user.save()
 
     res.json({
       success: true,
@@ -183,24 +229,26 @@ const updateProfile = async (req, res) => {
           fullName: user.fullName,
           email: user.email,
           phone: user.phone,
-          role: user.role
+          role: user.role,
+          avatar: user.avatar
         }
       }
-    });
+    })
   } catch (error) {
-    console.error(' UpdateProfile error:', error);
+    console.error('❌ UpdateProfile error:', error)
     res.status(500).json({
       success: false,
-      message: 'Lỗi server'
-    });
+      message: 'Lỗi server',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    })
   }
-};
+}
 
-console.log(' Auth controller functions defined (CommonJS)');
+console.log('✅ Auth controller functions defined')
 
 module.exports = {
   register,
   login,
   getMe,
   updateProfile
-};
+}

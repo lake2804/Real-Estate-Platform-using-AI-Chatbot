@@ -52,17 +52,10 @@ const chatStore = useChatStore()
 const authStore = useAuthStore()
 const chatbotStore = useChatbotStore()
 
-// Initialize chatbot on app start
-onMounted(async () => {
-  if (authStore.currentUser) {
-    await chatStore.initChat().catch(error => {
-      console.warn('Could not initialize chat on app start:', error)
-    })
-  }
-  
-  // Initialize AI chatbot
-  await chatbotStore.initChatbot()
-})
+console.log('🏠 Default layout loaded')
+
+// Optional: Initialize chatbot store if needed
+console.log('🤖 Chatbot store initialized in layout')
 </script>
 
 <style scoped>

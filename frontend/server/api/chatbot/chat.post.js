@@ -36,21 +36,32 @@ export default defineEventHandler(async (event) => {
 
     console.log('✅ Backend response received:', {
       success: response.success,
-      hasMessage: !!response.data?.message,
+      hasResponse: !!response.data?.response,
+      responseLength: response.data?.response?.length || 0,
       confidence: response.data?.confidence
     })
 
+    // LOG FULL RESPONSE FOR DEBUGGING
+    console.log('📋 Full backend response:', JSON.stringify(response, null, 2))
+
+    // Return the exact response from backend - DON'T MODIFY IT
     return response
 
   } catch (error) {
     console.error('❌ Nuxt API Error:', error)
     
-    // Return structured error response
+    // Return structured error response matching backend format
     return {
       success: false,
-      error: true,
       message: 'Xin lỗi, tôi đang gặp vấn đề kỹ thuật. Vui lòng thử lại sau.',
-      details: error.message
+      data: {
+        response: 'Hệ thống đang bảo trì. Vui lòng thử lại sau.',
+        confidence: 0.0,
+        sources: ['Error Fallback'],
+        conversationId: null,
+        timestamp: new Date().toISOString(),
+        error: true
+      }
     }
   }
 })

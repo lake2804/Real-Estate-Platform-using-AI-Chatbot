@@ -7,18 +7,17 @@ import uuid
 from datetime import datetime
 import logging
 import os
-from dotenv import load_dotenv
-import traceback
 
-# Load environment variables
-load_dotenv()
+# Simple logging setup
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Real Estate RAG Chatbot API", version="1.0.0")
 
-# CORS middleware
+# Simple CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:4000").split(","),
+    allow_origins=["http://localhost:3000", "http://localhost:4000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -26,124 +25,48 @@ app.add_middleware(
 
 # Request/Response models
 class ChatRequest(BaseModel):
-    query: str
+    message: Optional[str] = None
+    query: Optional[str] = None  # Support both message and query
     conversation_id: Optional[str] = None
     user_id: Optional[str] = None
     context: Optional[Dict[str, Any]] = None
 
+    # Custom validation to ensure at least message or query is provided
+    def model_post_init(self, __context):
+        if not self.message and not self.query:
+            raise ValueError("Either 'message' or 'query' field is required")
+        # Use query if message is not provided
+        if not self.message and self.query:
+            self.message = self.query
+        # Use message if query is not provided  
+        if not self.query and self.message:
+            self.query = self.message
+
 class ChatResponse(BaseModel):
-    answer: str
-    confidence: float
-    sources: List[str]
-    conversation_id: str
+    success: bool
+    data: Dict[str, Any]
+    message: Optional[str] = None
+
+class HealthResponse(BaseModel):
+    status: str
     timestamp: str
+    service: str
+    active_conversations: int
 
-class ConversationHistory(BaseModel):
-    messages: List[Dict[str, Any]]
-    conversation_id: str
-
-# In-memory storage for conversations (use Redis/DB in production)
+# In-memory conversation storage
 conversations = {}
 
-# Logging setup
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Update the chat endpoint with better error handling
-@app.post("/chat", response_model=ChatResponse)
-async def chat_with_rag(request: ChatRequest):
-    """Main chat endpoint that processes user queries using RAG"""
-    try:
-        logger.info(f"🤖 Processing chat request: {request.query[:50]}...")
-        logger.info(f"📋 Request details: conversation_id={request.conversation_id}, user_id={request.user_id}")
-        
-        # Generate conversation ID if not provided
-        conversation_id = request.conversation_id or str(uuid.uuid4())
-        
-        # Initialize conversation if new
-        if conversation_id not in conversations:
-            conversations[conversation_id] = {
-                "messages": [],
-                "created_at": datetime.now().isoformat(),
-                "user_id": request.user_id
-            }
-            logger.info(f"✅ New conversation created: {conversation_id}")
-        
-        # Add user message to conversation
-        user_message = {
-            "role": "user",
-            "content": request.query,
-            "timestamp": datetime.now().isoformat()
-        }
-        conversations[conversation_id]["messages"].append(user_message)
-        logger.info(f"✅ User message added to conversation")
-        
-        # Process query with RAG system
-        logger.info(f"🔄 Processing RAG query...")
-        rag_result = await process_rag_query(
-            query=request.query,
-            context=request.context or {},
-            conversation_history=conversations[conversation_id]["messages"]
-        )
-        logger.info(f"✅ RAG query processed successfully")
-        
-        # Add bot response to conversation
-        bot_message = {
-            "role": "assistant",
-            "content": rag_result["answer"],
-            "timestamp": datetime.now().isoformat(),
-            "confidence": rag_result["confidence"],
-            "sources": rag_result["sources"]
-        }
-        conversations[conversation_id]["messages"].append(bot_message)
-        
-        response = ChatResponse(
-            answer=rag_result["answer"],
-            confidence=rag_result["confidence"],
-            sources=rag_result["sources"],
-            conversation_id=conversation_id,
-            timestamp=datetime.now().isoformat()
-        )
-        
-        logger.info(f"✅ Response created successfully")
-        return response
-        
-    except Exception as e:
-        error_msg = str(e)
-        error_trace = traceback.format_exc()
-        logger.error(f"❌ Chat processing error: {error_msg}")
-        logger.error(f"❌ Full traceback: {error_trace}")
-        
-        # Return fallback response instead of raising HTTPException
-        return ChatResponse(
-            answer="Xin lỗi, tôi đang gặp vấn đề kỹ thuật. Vui lòng thử lại sau hoặc liên hệ hotline 1900 1000 để được hỗ trợ trực tiếp.",
-            confidence=0.0,
-            sources=[],
-            conversation_id=request.conversation_id or str(uuid.uuid4()),
-            timestamp=datetime.now().isoformat()
-        )
-
-# Update process_rag_query with better error handling
-async def process_rag_query(query: str, context: Dict, conversation_history: List) -> Dict:
-    """Process RAG query with enhanced error handling"""
-    try:
-        logger.info(f"🔍 Processing query: '{query}'")
-        
-        # Convert query to lowercase for matching
-        query_lower = query.lower().strip()
-        logger.info(f"🔍 Query lowercase: '{query_lower}'")
-        
-        # Check for greeting words
-        greeting_words = ["xin chào", "hello", "hi", "chào", "xin", "chao"]
-        if any(word in query_lower for word in greeting_words):
-            logger.info("✅ Matched greeting pattern")
-            answer = """
+# Real estate knowledge base
+REAL_ESTATE_KNOWLEDGE = {
+    "greetings": {
+        "keywords": ["xin chào", "hello", "hi", "chào", "xin", "chao", "hey"],
+        "response": """
 👋 **Xin chào! Tôi là AI Assistant chuyên về bất động sản.**
 
 🎯 **Tôi có thể giúp bạn:**
 🏠 Tìm kiếm căn hộ, nhà đất phù hợp
 💰 Tư vấn giá cả và xu hướng thị trường
-🏗️ Thông tin các dự án mới nhất  
+🏗️ Thông tin các dự án mới nhất
 📋 Hướng dẫn thủ tục mua bán
 📈 Phân tích cơ hội đầu tư
 
@@ -153,175 +76,306 @@ async def process_rag_query(query: str, context: Dict, conversation_history: Lis
 • "Tư vấn mua căn hộ đầu tư với 3 tỷ"
 
 💬 **Bạn quan tâm về điều gì? Hãy hỏi tôi nhé!**
-            """
-            confidence = 0.95
-            sources = ["Chatbot Greeting"]
-            
-        # Check for price-related words
-        elif any(word in query_lower for word in ["giá", "price", "bán", "mua", "cost", "money"]):
-            logger.info("✅ Matched price pattern")
-            answer = """
-🏠 **Thông tin giá bất động sản hiện tại:**
+        """,
+        "confidence": 0.95
+    },
+    
+    "prices": {
+        "keywords": ["giá", "price", "bán", "mua", "cost", "money", "tiền", "bao nhiêu"],
+        "response": """
+💰 **Bảng giá bất động sản TP.HCM cập nhật 2024:**
 
-**Căn hộ chung cư TP.HCM:**
-• Quận 1, 3: 60-120 triệu/m²
-• Quận 2, 7, 9: 40-70 triệu/m²  
-• Quận ngoại: 25-45 triệu/m²
+**🏢 CĂN HỘ CHUNG CƯ:**
+• **Quận 1, 3:** 80-150 triệu/m² (trung tâm)
+• **Quận 2, 7:** 50-90 triệu/m² (phát triển)
+• **Quận 9, Thủ Đức:** 35-65 triệu/m² (tiềm năng)
+• **Các quận khác:** 25-50 triệu/m²
 
-**Nhà riêng:**
-• Trung tâm: 150-400 triệu/m²
-• Ngoại thành: 80-150 triệu/m²
+**🏠 NHÀ RIÊNG/BIỆT THỰ:**
+• **Trung tâm:** 200-500 triệu/m²
+• **Ngoại thành:** 100-200 triệu/m²
 
-**Xu hướng thị trường Q4/2024:**
-📈 Giá tăng 6-8%/năm
-🏗️ Nguồn cung khan hiếm khu trung tâm
-💡 Khu Đông (Q2, Q9, Thủ Đức) phát triển mạnh
+**📈 XU HƯỚNG Q4/2024:**
+✅ Giá tăng nhẹ 5-8%/năm
+✅ Khu Đông phát triển mạnh
+✅ Cung thiếu, cầu tăng ở phân khúc trung cấp
 
-Bạn quan tâm khu vực nào cụ thể?
-            """
-            confidence = 0.88
-            sources = ["Báo cáo thị trường BĐS Q4/2024"]
-            
-        # Check for project-related words
-        elif any(word in query_lower for word in ["dự án", "project", "chung cư", "vinhomes", "masteri", "apartment"]):
-            logger.info("✅ Matched project pattern")
-            answer = """
-🏗️ **TOP dự án nổi bật đang mở bán:**
+*Bạn muốn tìm hiểu giá ở khu vực nào cụ thể?*
+        """,
+        "confidence": 0.92
+    },
+    
+    "projects": {
+        "keywords": ["dự án", "project", "chung cư", "vinhomes", "masteri", "apartment", "khu đô thị"],
+        "response": """
+🏗️ **TOP dự án HOT đang mở bán 2024:**
 
-**🌟 Vinhomes Grand Park - Quận 9**
-• Giá: 35-50 triệu/m²
-• Tiến độ: Đang bàn giao T1-T5
-• Ưu điểm: Công viên 36ha, trường quốc tế
+**🌟 VINHOMES GRAND PARK - Q9**
+💰 Giá: 38-55 triệu/m²
+🏗️ Tiến độ: Đã bàn giao 70%
+✨ Ưu điểm: Công viên 36ha, trường quốc tế, Metro Line 1
 
-**🌟 Masteri Centre Point - Quận 9**
-• Giá: 42-58 triệu/m²
-• Tiến độ: Hoàn thiện Q3/2025
-• Ưu điểm: View sông, gần Metro Line 1
+**🌟 MASTERI CENTRE POINT - Q9**
+💰 Giá: 45-62 triệu/m²
+🏗️ Tiến độ: Hoàn thiện Q2/2025
+✨ Ưu điểm: View sông Sài Gòn, gần TTTM
 
-**🌟 The Metropole Thủ Thiêm - Quận 2**
-• Giá: 70-110 triệu/m²
-• Tiến độ: Sắp mở bán Q1/2025
-• Đặc điểm: Hạng sang, view Landmark 81
+**🌟 THE METROPOLE THỦ THIÊM - Q2**
+💰 Giá: 85-140 triệu/m²
+🏗️ Tiến độ: Mở bán Q1/2025
+✨ Ưu điểm: Hạng sang, view Landmark 81
 
-Bạn muốn tìm hiểu dự án nào chi tiết?
-            """
-            confidence = 0.92
-            sources = ["Website chủ đầu tư", "Thông tin môi giới"]
-            
-        # Check for advice-related words
-        elif any(word in query_lower for word in ["tư vấn", "advice", "đầu tư", "nên", "recommend", "suggest"]):
-            logger.info("✅ Matched advice pattern")
-            answer = """
-💡 **Tư vấn đầu tư bất động sản 2024:**
+**🌟 ECOPARK HẢI DƯƠNG**
+💰 Giá: 25-40 triệu/m²
+🏗️ Tiến độ: Nhiều phân khu đã hoàn thiện
+✨ Ưu điểm: Thành phố xanh, giá hợp lý
 
-**🔍 PHÂN TÍCH THỊ TRƯỜNG:**
-📊 Thị trường đã qua đáy, đang hồi phục
-💰 Lãi suất ngân hàng ổn định 10-12%/năm
-🏗️ Nguồn cung mới hạn chế, giá tăng nhẹ
+*Bạn quan tâm dự án nào? Tôi sẽ tư vấn chi tiết!*
+        """,
+        "confidence": 0.90
+    },
+    
+    "investment": {
+        "keywords": ["đầu tư", "investment", "tư vấn", "nên mua", "recommend", "suggest", "lời khuyên"],
+        "response": """
+📊 **CHIẾN LƯỢC ĐẦU TƯ BĐS 2024:**
 
-**⭐ KHU VỰC ĐÁNG ĐẦU TƯ:**
-• Khu Đông (Q2, Q9, Thủ Đức): Tiềm năng cao
-• Khu Nam (Q7, Nhà Bè): Thanh khoản tốt
+**🎯 KHU VỰC TIỀM NĂNG:**
+🔥 **Khu Đông (Q2, Q9, Thủ Đức):** +12-15%/năm
+• Metro Line 1 đi vào hoạt động
+• Nhiều dự án lớn hoàn thiện
+• Giá còn hợp lý so với trung tâm
 
-**💡 LOOS KHUYÊN:**
-✅ Ưu tiên vị trí có tiềm năng phát triển
-✅ Gần giao thông công cộng
-✅ Khu vực có trường học tốt
-✅ Không vay quá 70% giá trị nhà
+🔥 **Khu Nam (Q7, Nhà Bè):** +8-10%/năm
+• Hạ tầng hoàn thiện
+• Thanh khoản cao
+• Phù hợp đầu tư cho thuê
 
-Bạn có bao nhiêu vốn và muốn đầu tư theo hướng nào?
-            """
-            confidence = 0.90
-            sources = ["Phân tích chuyên gia", "Báo cáo thị trường"]
-            
-        # Check for rental-related words
-        elif any(word in query_lower for word in ["thuê", "rent", "cho thuê", "rental"]):
-            logger.info("✅ Matched rental pattern")
-            answer = """
-🏠 **Thị trường cho thuê TP.HCM 2024:**
+**💡 NGUYÊN TẮC VÀNG:**
+✅ **Vị trí > Giá cả:** Ưu tiên khu vực phát triển
+✅ **Pháp lý rõ ràng:** Sổ hồng, chủ đầu tư uy tín
+✅ **Tài chính an toàn:** Vay tối đa 70%
+✅ **Đa dạng hóa:** Không đặt hết trứng vào 1 giỏ
 
-**💰 GIÁ THUÊ HIỆN TẠI:**
-• Studio/1PN: 8-18 triệu/tháng
-• 2PN: 15-30 triệu/tháng  
-• 3PN: 22-45 triệu/tháng
+**🎯 THEO NGÂ TRƯỚC:**
+💰 **Dưới 2 tỷ:** Căn hộ Q9, Thủ Đức
+💰 **2-4 tỷ:** Căn hộ Q2, Q7 hoặc nhà Q12, Gò Vấp
+💰 **Trên 5 tỷ:** Căn hộ trung tâm hoặc biệt thự
+
+*Bạn có bao nhiêu vốn? Tôi sẽ tư vấn cụ thể!*
+        """,
+        "confidence": 0.88
+    },
+    
+    "rental": {
+        "keywords": ["thuê", "rent", "cho thuê", "rental", "lease"],
+        "response": """
+🏠 **THỊ TRƯỜNG CHO THUÊ TP.HCM 2024:**
+
+**💰 BẢNG GIÁ THUÊ (triệu/tháng):**
+
+**🏢 CĂN HỘ CHUNG CƯ:**
+• **Studio/1PN:** 8-20 triệu
+• **2PN:** 15-35 triệu
+• **3PN:** 25-50 triệu
+• **Penthouse:** 50-150 triệu
+
+**🏠 NHÀ RIÊNG:**
+• **Nhà cấp 4:** 10-25 triệu
+• **Nhà 1 trệt 1 lầu:** 20-40 triệu
+• **Biệt thự:** 50-200 triệu
 
 **🔥 KHU VỰC HOT CHO THUÊ:**
-• Quận 1, 3, 5: Giá cao, dễ cho thuê
-• Quận 2, 7, 9: Giá trung bình, cân bằng tốt
+📍 **Q1, Q3:** Giá cao, dễ cho thuê (văn phòng)
+📍 **Q2, Q7:** Cân bằng giá-chất lượng
+📍 **Q9, Thủ Đức:** Giá tốt, nhiều lựa chọn
 
 **💡 TIPS CHO THUÊ NHANH:**
-📸 Chụp ảnh chuyên nghiệp
-💰 Giá cạnh tranh với thị trường
-📱 Đăng đa kênal: Batdongsan, Chotot
+✅ Giá cạnh tranh (-5% so với thị trường)
+✅ Hình ảnh đẹp, mô tả chi tiết
+✅ Đăng đa kênh: Batdongsan.com.vn, Chotot, Facebook
 
-Bạn đang muốn cho thuê hay tìm thuê nhà?
-            """
-            confidence = 0.87
-            sources = ["Thống kê cho thuê", "Kinh nghiệm môi giới"]
-            
-        else:
-            # Default response for any other query
-            logger.info("✅ Using default response")
-            answer = """
-🤔 **Tôi chưa hiểu rõ câu hỏi của bạn. Để tôi có thể hỗ trợ tốt hơn:**
+*Bạn muốn cho thuê hay tìm thuê?*
+        """,
+        "confidence": 0.86
+    },
+    
+    "legal": {
+        "keywords": ["pháp lý", "legal", "sổ hồng", "thủ tục", "giấy tờ", "hợp đồng"],
+        "response": """
+📋 **HƯỚNG DẪN THỦ TỤC MỊA BÁN NHÀ:**
 
-**🏠 CÁC CHỦ ĐỀ TÔI CÓ THỂ TƯ VẤN:**
+**📄 GIẤY TỜ CẦN THIẾT:**
+✅ **Bên bán:**
+• Sổ hồng/sổ đỏ gốc
+• CMND/CCCD
+• Giấy chứng nhận độc thân/kết hôn
+• Giấy ủy quyền (nếu có)
 
-📊 **Thông tin thị trường:**
-• "Giá nhà ở khu vực [tên quận]"
-• "Xu hướng giá bất động sản 2024"
+✅ **Bên mua:**
+• CMND/CCCD
+• Hộ khẩu (nếu cần)
+• Chứng minh thu nhập (vay ngân hàng)
 
-🏗️ **Dự án bất động sản:**
-• "Dự án nào đang mở bán tốt?"
-• "Thông tin về dự án Vinhomes"
+**⚖️ CÁC BƯỚC THỰC HIỆN:**
+1️⃣ **Thỏa thuận:** Giá cả, thời gian
+2️⃣ **Đặt cọc:** 50-200 triệu (tùy giá trị)
+3️⃣ **Thẩm định:** Pháp lý, giá trị
+4️⃣ **Ký hợp đồng:** Tại công chứng
+5️⃣ **Thanh toán:** Chuyển tiền, bàn giao
+6️⃣ **Làm sổ:** Nộp hồ sơ sang tên
 
-💡 **Tư vấn đầu tư:**
-• "Nên đầu tư khu vực nào?"
-• "Mua nhà với 3 tỷ nên chọn thế nào?"
+**⏰ THỜI GIAN XỬ LÝ:**
+• Làm sổ hồng mới: 15-30 ngày
+• Phí sang tên: 0.5-1% giá trị
 
-🏠 **Thuê nhà:**
-• "Giá thuê căn hộ 2PN ở Quận 7"
+*Bạn cần hỗ trợ thủ tục nào cụ thể?*
+        """,
+        "confidence": 0.84
+    }
+}
 
-**💬 VÍ DỤ CÂU HỎI:**
-• "Tư vấn mua căn hộ 2PN giá 3 tỷ"
-• "Giá thuê nhà riêng ở Quận 2"
-
-Bạn có thể hỏi cụ thể hơn không?
-            """
-            confidence = 0.70
-            sources = ["Hướng dẫn sử dụng"]
+def find_best_match(query: str) -> Dict[str, Any]:
+    """Find best matching response from knowledge base"""
+    query_lower = query.lower().strip()
+    
+    logger.info(f"🔍 Searching for: '{query_lower}'")
+    
+    # Check each category
+    best_match = None
+    best_score = 0
+    
+    for category, data in REAL_ESTATE_KNOWLEDGE.items():
+        score = 0
+        for keyword in data["keywords"]:
+            if keyword in query_lower:
+                score += 1
         
-        result = {
-            "answer": answer.strip(),
-            "confidence": confidence,
-            "sources": sources
+        if score > best_score:
+            best_score = score
+            best_match = {
+                "category": category,
+                "response": data["response"].strip(),
+                "confidence": data["confidence"],
+                "sources": [f"Knowledge Base - {category.title()}"]
+            }
+            logger.info(f"✅ Match found: {category} (score={score})")
+    
+    if best_match:
+        logger.info(f"🎯 Best match: {best_match['category']} with confidence {best_match['confidence']}")
+        return best_match
+    
+    # Default response
+    logger.info("🤔 No specific match found, using default response")
+    return {
+        "category": "default",
+        "response": """
+🤔 **Tôi chưa hiểu rõ câu hỏi của bạn.**
+
+**🏠 CÁC CHỦ ĐỀ TÔI CÓ THỂ HỖ TRỢ:**
+
+📊 **Thông tin thị trường:** "Giá nhà Quận 7", "Xu hướng 2024"
+🏗️ **Dự án BĐS:** "Dự án Vinhomes", "Chung cư mở bán"
+💡 **Tư vấn đầu tư:** "Nên mua ở đâu?", "Đầu tư 3 tỷ"
+🏠 **Cho thuê:** "Giá thuê căn hộ", "Cho thuê nhanh"
+📋 **Pháp lý:** "Thủ tục mua nhà", "Làm sổ hồng"
+
+**💭 VÍ DỤ CÂU HỎI:**
+• "Tư vấn mua căn hộ 2PN giá 3 tỷ ở Q7"
+• "Dự án nào đang mở bán ở Thủ Đức?"
+• "Giá thuê nhà riêng 3PN ở Q2"
+
+*Hãy hỏi cụ thể hơn để tôi hỗ trợ tốt nhất!*
+        """.strip(),
+        "confidence": 0.60,
+        "sources": ["Default Response"]
+    }
+
+@app.post("/chat")  # Backend expects this endpoint
+async def chat_legacy_endpoint(request: ChatRequest):
+    """Legacy chat endpoint for backend compatibility"""
+    try:
+        logger.info(f"🤖 Chat request received: query='{request.query}', message='{request.message}'")
+        
+        # Get user message from either field
+        user_message = request.query or request.message
+        
+        if not user_message or user_message.strip() == "":
+            return ChatResponse(
+                success=False,
+                data={
+                    "response": "Vui lòng nhập câu hỏi.",
+                    "confidence": 0.0,
+                    "sources": [],
+                    "conversationId": str(uuid.uuid4()),
+                    "timestamp": datetime.now().isoformat()
+                },
+                message="Thiếu nội dung câu hỏi"
+            )
+        
+        logger.info(f"🔍 Processing message: '{user_message}'")
+        
+        # Generate conversation ID if not provided
+        conversation_id = request.conversation_id or str(uuid.uuid4())
+        
+        # Find best matching response
+        match_result = find_best_match(user_message)
+        
+        logger.info(f"✅ Found match: category={match_result['category']}, confidence={match_result['confidence']}")
+        logger.info(f"📝 Response preview: {match_result['response'][:100]}...")
+        
+        # Return response in expected format
+        response_data = {
+            "response": match_result["response"],
+            "confidence": match_result["confidence"],
+            "sources": match_result["sources"],
+            "conversationId": conversation_id,
+            "timestamp": datetime.now().isoformat(),
+            "category": match_result["category"]
         }
         
-        logger.info(f"✅ RAG result created: confidence={confidence}")
-        return result
+        response = ChatResponse(
+            success=True,
+            data=response_data,
+            message="Phản hồi thành công"
+        )
+        
+        logger.info(f"🚀 Sending response: success=True, response_length={len(match_result['response'])}")
+        
+        return response
         
     except Exception as e:
-        error_msg = str(e)
-        error_trace = traceback.format_exc()
-        logger.error(f"❌ RAG processing error: {error_msg}")
-        logger.error(f"❌ RAG traceback: {error_trace}")
+        logger.error(f"❌ Chat error: {str(e)}")
         
-        return {
-            "answer": "Xin lỗi, tôi đang gặp vấn đề kỹ thuật. Vui lòng thử lại sau hoặc liên hệ hotline 1900 1000.",
-            "confidence": 0.0,
-            "sources": []
-        }
+        return ChatResponse(
+            success=False,
+            data={
+                "response": "Xin lỗi, tôi đang gặp vấn đề kỹ thuật. Vui lòng thử lại sau.",
+                "confidence": 0.0,
+                "sources": [],
+                "conversationId": request.conversation_id or str(uuid.uuid4()),
+                "timestamp": datetime.now().isoformat(),
+                "error": str(e)
+            },
+            message="Lỗi xử lý yêu cầu"
+        )
 
-@app.get("/history/{conversation_id}", response_model=ConversationHistory)
+@app.post("/chatbot/chat", response_model=ChatResponse)
+async def chat_endpoint(request: ChatRequest):
+    """Main chat endpoint"""
+    # Use the same logic as legacy endpoint
+    return await chat_legacy_endpoint(request)
+
+@app.get("/history/{conversation_id}")
 async def get_conversation_history(conversation_id: str):
     """Get conversation history"""
     if conversation_id not in conversations:
         raise HTTPException(status_code=404, detail="Conversation not found")
     
-    return ConversationHistory(
-        messages=conversations[conversation_id]["messages"],
-        conversation_id=conversation_id
-    )
+    return {
+        "success": True,
+        "data": conversations[conversation_id]
+    }
 
 @app.delete("/clear/{conversation_id}")
 async def clear_conversation(conversation_id: str):
@@ -340,6 +394,24 @@ async def health_check():
         "active_conversations": len(conversations),
         "python_version": "3.x",
         "service": "Real Estate RAG Chatbot"
+    }
+
+@app.get("/test")
+async def test_endpoint():
+    """Test endpoint to verify API is working"""
+    test_query = "tư vấn giá cả"
+    match_result = find_best_match(test_query)
+    
+    return {
+        "status": "working",
+        "test_query": test_query,
+        "match_result": {
+            "category": match_result["category"],
+            "confidence": match_result["confidence"],
+            "response_length": len(match_result["response"]),
+            "response_preview": match_result["response"][:200] + "...",
+            "sources": match_result["sources"]
+        }
     }
 
 if __name__ == "__main__":
