@@ -388,22 +388,8 @@
       </div>
     </div>
 
-    <!-- Debug info (development only) -->
-    <div v-if="isDev" class="container px-4 pb-8 mx-auto max-w-7xl">
-      <div class="p-6 font-mono text-sm text-white bg-gray-900 rounded-2xl">
-        <h3 class="mb-4 text-lg font-bold text-yellow-400">🔧 Debug Info</h3>
-        <div class="grid gap-2">
-          <div><span class="text-yellow-400">ID:</span> {{ projectId }}</div>
-          <div><span class="text-yellow-400">Direct API:</span> {{ directApiUrl }}</div>
-          <div><span class="text-yellow-400">List API:</span> {{ listApiUrl }}</div>
-          <div><span class="text-yellow-400">Pending:</span> {{ pending }}</div>
-          <div><span class="text-yellow-400">Error:</span> {{ !!error }}</div>
-          <div><span class="text-yellow-400">Project:</span> {{ !!project }}</div>
-          <div><span class="text-yellow-400">Title:</span> {{ project?.title || project?.name || 'None' }}</div>
-          <div><span class="text-yellow-400">Available:</span> {{ allProjectsList.length }} projects</div>
-        </div>
-      </div>
-    </div>
+   
+
   </div>
 </template>
 
