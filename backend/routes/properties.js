@@ -67,23 +67,22 @@ router.get('/', async (req, res) => {
           { title: searchRegex },
           { description: searchRegex },
           { 'location.address': searchRegex },
-          { 'location.district': searchRegex }, // Also search district
-          { 'location.city': searchRegex } // Also search city
+          { 'location.district': searchRegex },
+          { 'location.city': searchRegex },
+          { 'project.name': searchRegex }
         ]
       });
     }
 
-    // Bedrooms filter
+    // ✅ Bedrooms filter - cập nhật để search theo string format
     if (bedrooms) {
-      const numBedrooms = parseInt(bedrooms);
-      if (!isNaN(numBedrooms)) {
-        // For "4+", it means 4 or more. For "3", it means exactly 3.
-        if (bedrooms.endsWith('+')) {
-          queryConditions.push({ 'details.bedrooms': { $gte: numBedrooms } });
-        } else {
-          queryConditions.push({ 'details.bedrooms': numBedrooms });
-        }
-      }
+      const bedroomRegex = { $regex: bedrooms, $options: 'i' };
+      queryConditions.push({
+        $or: [
+          { 'details.bedrooms': bedroomRegex },
+          { bedrooms: parseInt(bedrooms) }
+        ]
+      });
     }
 
     // Construct the final query object
@@ -91,7 +90,6 @@ router.get('/', async (req, res) => {
     if (queryConditions.length > 0) {
       finalQuery.$and = queryConditions;
     } else {
-      // Should not happen if isActive is always there, but as a fallback
       finalQuery = { isActive: true };
     }
 
@@ -245,7 +243,7 @@ router.get('/search/popular', async (req, res) => {
   }
 })
 
-// GET /api/properties/:id - Get single property
+// ✅ GET /api/properties/:id - Get single property với detailed info
 router.get('/:id', async (req, res) => {
   try {
     console.log(`🔍 Looking for property with ID: ${req.params.id}`)
@@ -264,9 +262,48 @@ router.get('/:id', async (req, res) => {
     // Increment views
     await Property.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } })
 
+    // ✅ Format response với thông tin chi tiết
+    const detailedProperty = {
+      ...property,
+      formattedPrice: new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND'
+      }).format(property.price),
+      
+      // ✅ Ensure furniture object exists  
+      furniture: property.furniture || {
+        hasBasicFurniture: false,
+        hasKitchen: false,
+        hasAirConditioner: false,
+        hasWashingMachine: false,
+        hasRefrigerator: false,
+        hasTV: false,
+        hasBed: false,
+        hasDiningTable: false,
+        hasWifi: false,
+        hasMicrowave: false
+      },
+      
+      // ✅ Ensure project advantages exist
+      projectAdvantages: property.projectAdvantages || {
+        location: [],
+        facilities: [],
+        amenities: []
+      },
+      
+      // ✅ Ensure project info exists
+      project: property.project || {
+        name: '',
+        developer: '',
+        totalUnits: 0,
+        yearBuilt: null,
+        handoverYear: null
+      }
+    }
+
     res.json({
       success: true,
-      data: property
+      data: detailedProperty
     })
   } catch (error) {
     console.error('❌ Error fetching property:', error)

@@ -364,7 +364,7 @@
         </div>
       </div>
 
-      <!-- ✅ DEBUG INFO - Use isClient ref -->
+      <!-- ✅ DEBUG INFO - Use isClient ref
       <div v-if="isClient" class="p-4 mb-4 bg-yellow-100 border rounded">
         <h4 class="font-bold">News Debug:</h4>
         <p>Loading: {{ isLoadingNews }}</p>
@@ -376,7 +376,7 @@
           <h5 class="font-semibold">Sample News Item:</h5>
           <pre class="overflow-auto text-xs max-h-32">{{ JSON.stringify(news[0], null, 2) }}</pre>
         </div>
-      </div>
+      </div> -->
 
       <!-- Loading State -->
       <div

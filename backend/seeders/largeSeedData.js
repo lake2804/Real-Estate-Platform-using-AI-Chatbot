@@ -661,82 +661,215 @@ async function seedDatabase() {
 function generatePropertiesWithOwners(count = 2000, ownerIds = []) {
   const properties = []
   
-  for (let i = 0; i < count; i++) {
-    const province = getRandomElement(provinces)
-    const district = getRandomElement(province.districts)
-    const propertyType = getRandomElement(['apartment', 'house', 'villa', 'townhouse', 'land'])
-    const listingType = getRandomElement(['sale', 'rent'])
-    
-    // Base prices
-    let basePrice
-    if (listingType === 'rent') {
-      basePrice = {
-        apartment: getRandomNumber(8, 50) * 1000000,
-        house: getRandomNumber(15, 80) * 1000000,
-        villa: getRandomNumber(50, 200) * 1000000,
-        townhouse: getRandomNumber(20, 60) * 1000000,
-        land: getRandomNumber(5, 30) * 1000000
-      }[propertyType]
-    } else {
-      basePrice = {
-        apartment: getRandomNumber(2, 15) * 1000000000,
-        house: getRandomNumber(3, 25) * 1000000000,
-        villa: getRandomNumber(10, 80) * 1000000000,
-        townhouse: getRandomNumber(4, 20) * 1000000000,
-        land: getRandomNumber(1, 30) * 1000000000
-      }[propertyType]
+  // ✅ Dữ liệu mẫu cho Vinhomes và các dự án thực tế
+  const realProjects = [
+    {
+      name: 'Vinhomes Golden River Ba Son',
+      developer: 'Tập đoàn Vingroup',
+      city: 'Ho Chi Minh City',
+      district: 'District 1',
+      yearBuilt: 2021,
+      handoverYear: 2023,
+      advantages: {
+        location: [
+          'Vị trí địa lý giao thông đi lại đến Vinhomes Golden River',
+          'Gần các điểm tham quan nội tiếng như Thủ Thiêm, sân golf Him Lam, Dinh Độc Lập',
+          'Tuyến Metro số 1 Bến Thành - Suối Tiên chạy qua ngang giúp cư dân dễ dàng di chuyển'
+        ],
+        facilities: [
+          'Nội thất: Đầy đủ tiện nghi với sofa, bàn ăn, giường, bàn, tivi',
+          'Máy lạnh, tủ lạnh, máy nước nóng, máy giặt',
+          'Truyền hình cáp, wifi, điện thoại',
+          'Bàn công',
+          'Bồn tắm',
+          'Gần trường học, bệnh viện, trung tâm mua sắm',
+          'Cửa hàng tiện lợi (24/24)',
+          'An ninh 24/7'
+        ]
+      }
+    },
+    {
+      name: 'Vinhomes Central Park',
+      developer: 'Tập đoàn Vingroup',
+      city: 'Ho Chi Minh City', 
+      district: 'Binh Thanh',
+      yearBuilt: 2018,
+      handoverYear: 2020,
+      advantages: {
+        location: [
+          'Vị trí trung tâm Thành phố Hồ Chí Minh',
+          'Gần trung tâm tài chính và thương mại',
+          'Kết nối dễ dàng với các quận trung tâm'
+        ],
+        facilities: [
+          'Công viên trung tâm 14ha',
+          'Trung tâm thương mại Vincom',
+          'Trường học quốc tế',
+          'Hệ thống an ninh 24/7',
+          'Bể bơi và gym hiện đại'
+        ]
+      }
+    },
+    {
+      name: 'Masteri Thao Dien',
+      developer: 'Thảo Điền Investment',
+      city: 'Ho Chi Minh City',
+      district: 'District 2', 
+      yearBuilt: 2019,
+      handoverYear: 2021,
+      advantages: {
+        location: [
+          'Khu vực Thảo Điền cao cấp',
+          'Gần trường quốc tế và khu ngoại giao',
+          'View sông Sài Gòn tuyệt đẹp'
+        ],
+        facilities: [
+          'Hồ bơi vô cực tầng thượng',
+          'Phòng gym và spa',
+          'Khu vui chơi trẻ em',
+          'Sky garden và BBQ area'
+        ]
+      }
     }
+  ]
+
+  // ✅ Danh sách nội thất và tiện ích
+  const furnitureOptions = [
+    { hasBasicFurniture: true, hasKitchen: true, hasAirConditioner: true, hasWashingMachine: true, hasRefrigerator: true, hasTV: true, hasBed: true, hasDiningTable: true, hasWifi: true, hasMicrowave: true },
+    { hasBasicFurniture: true, hasKitchen: true, hasAirConditioner: true, hasWashingMachine: false, hasRefrigerator: true, hasTV: true, hasBed: true, hasDiningTable: false, hasWifi: true, hasMicrowave: false },
+    { hasBasicFurniture: false, hasKitchen: false, hasAirConditioner: true, hasWashingMachine: false, hasRefrigerator: false, hasTV: false, hasBed: false, hasDiningTable: false, hasWifi: true, hasMicrowave: false }
+  ]
+
+  const bedroomTypes = ['1PN/1WC', '2PN/2WC', '3PN/2WC', '3PN/3WC', '4PN/3WC', '4PN/4WC']
+  const directions = ['Đông', 'Tây', 'Nam', 'Bắc', 'Đông Nam', 'Đông Bắc', 'Tây Nam', 'Tây Bắc']
+  
+  for (let i = 0; i < count; i++) {
+    const project = getRandomElement(realProjects)
+    const isVinhomes = project.name.includes('Vinhomes')
+    const bedroomType = getRandomElement(bedroomTypes)
+    const area = getRandomNumber(50, 150) // m²
     
-    const finalPrice = getRandomPrice(basePrice, province.priceMultiplier)
-    const area = getRandomNumber(30, 500)
-    const bedrooms = propertyType === 'land' ? 0 : getRandomNumber(1, 6)
-    const bathrooms = propertyType === 'land' ? 0 : getRandomNumber(1, bedrooms + 1)
-    
-    // Random coordinates around province center
-    const lat = province.coordinates[1] + (Math.random() - 0.5) * 0.1
-    const lng = province.coordinates[0] + (Math.random() - 0.5) * 0.1
-    
-    // Chọn random owner từ danh sách user IDs
+    // Tính giá dựa trên dự án và diện tích
+    let basePrice
+    if (project.name.includes('Golden River')) {
+      basePrice = area * getRandomNumber(150000000, 200000000) // 150-200tr/m²
+    } else if (project.name.includes('Central Park')) {
+      basePrice = area * getRandomNumber(120000000, 160000000) // 120-160tr/m²  
+    } else {
+      basePrice = area * getRandomNumber(80000000, 120000000) // 80-120tr/m²
+    }
+
+    const listingType = getRandomElement(['sale', 'rent'])
+    if (listingType === 'rent') {
+      basePrice = Math.floor(basePrice * 0.003) // 0.3% giá bán/tháng
+    }
+
+    // Random coordinates around project area
+    const lat = project.city === 'Ho Chi Minh City' ? 
+      (10.8231 + (Math.random() - 0.5) * 0.02) : 
+      (21.0285 + (Math.random() - 0.5) * 0.02)
+    const lng = project.city === 'Ho Chi Minh City' ? 
+      (106.6297 + (Math.random() - 0.5) * 0.02) : 
+      (105.8542 + (Math.random() - 0.5) * 0.02)
+
+    // Chọn random owner từ danh sách user IDs  
     const ownerId = ownerIds.length > 0 ? getRandomElement(ownerIds) : new mongoose.Types.ObjectId()
-    
-    properties.push({
-      title: `${getRandomElement(propertyTitles[propertyType] || propertyTitles.apartment)} in ${district}`,
-      description: generatePropertyDescription(propertyType, province.name, district),
-      price: finalPrice,
-      location: {
-        address: `${getRandomNumber(1, 999)} Street ${i + 1}, ${district}, ${province.name}`,
-        district: district,
-        city: province.name,
-        coordinates: {
-          lat: lat,
-          lng: lng
-        }
+
+    const property = {
+      title: `Căn hộ ${bedroomType} ${project.name} ${area}m² giá ${listingType === 'rent' ? 'thuê' : 'bán'} tốt`,
+      
+      price: basePrice,
+      
+      // ✅ Chi tiết căn hộ
+      details: {
+        bedrooms: bedroomType,
+        area: area,
+        bathrooms: parseInt(bedroomType.split('/')[1].replace('WC', '')),
+        direction: getRandomElement(directions),
+        position: isVinhomes ? `Tòa ${getRandomElement(['A', 'B', 'C', 'D'])}` : `Block ${getRandomElement(['A', 'B', 'C'])}`,
+        floor: getRandomNumber(5, 45),
+        parking: Math.random() > 0.5,
+        balcony: Math.random() > 0.7
       },
+
+      // ✅ Nội thất chi tiết
+      furniture: getRandomElement(furnitureOptions),
+
+      description: generateDetailedDescription(project, bedroomType, area, listingType),
+
+      location: {
+        address: `${project.name}, ${project.district}, ${project.city}`,
+        district: project.district,
+        city: project.city,
+        coordinates: { lat, lng }
+      },
+
+      // ✅ Ưu điểm dự án
+      projectAdvantages: {
+        location: project.advantages.location,
+        facilities: project.advantages.facilities,
+        amenities: []
+      },
+
+      // ✅ Thông tin dự án
+      project: {
+        name: project.name,
+        developer: project.developer,
+        totalUnits: getRandomNumber(1000, 3000),
+        yearBuilt: project.yearBuilt,
+        handoverYear: project.handoverYear
+      },
+
       type: listingType,
-      category: propertyType,
-      area: area,
-      bedrooms: bedrooms,
-      bathrooms: bathrooms,
-      images: generatePropertyImages(propertyType),
-      amenities: getRandomAmenities(),
-      features: generatePropertyFeatures(propertyType),
-      yearBuilt: getRandomNumber(2010, 2024),
-      furnished: Math.random() > 0.5,
+      category: 'apartment',
+      status: 'available',
+      
+      images: generatePropertyImages('apartment'),
+      
       isFeatured: Math.random() > 0.8,
-      status: getRandomElement(['available', 'sold', 'rented']),
       views: getRandomNumber(10, 1000),
-      // ✅ Sử dụng ObjectId thực tế từ users đã tạo
       owner: ownerId,
       
-      // Thêm các field khác nếu cần
+      // ✅ Thông tin liên hệ
       contactInfo: {
-        name: `Agent ${getRandomNumber(1, 20)}`,
-        phone: `+8490${String(getRandomNumber(1000000, 9999999))}`
-      }
-    })
+        name: `${getRandomElement(['Anh', 'Chị'])} ${getRandomElement(['Minh', 'Hương', 'Phong', 'Lan', 'Đức', 'Mai'])}`,
+        phone: `+8490${String(getRandomNumber(1000000, 9999999))}`,
+        email: `agent${i}@realestate.com`
+      },
+
+      // Copy to root level for compatibility
+      area: area,
+      bedrooms: parseInt(bedroomType.split('PN')[0]),
+      bathrooms: parseInt(bedroomType.split('/')[1].replace('WC', ''))
+    }
+
+    properties.push(property)
   }
   
   return properties
+}
+
+// ✅ Function tạo mô tả chi tiết
+function generateDetailedDescription(project, bedroomType, area, listingType) {
+  const action = listingType === 'rent' ? 'cho thuê' : 'bán'
+  
+  return `${action.charAt(0).toUpperCase() + action.slice(1)} căn hộ ${bedroomType} tại ${project.name} 
+  
+🏠 THÔNG TIN CĂN HỘ:
+- Diện tích: ${area}m²
+- Loại: ${bedroomType}
+- Năm bàn giao: ${project.handoverYear}
+- Tình trạng: Đã có sổ hồng
+
+🌟 ƯU ĐIỂM DỰ ÁN:
+${project.advantages.location.map(item => `• ${item}`).join('\n')}
+
+🏢 TIỆN ÍCH NỘI KHU:
+${project.advantages.facilities.map(item => `• ${item}`).join('\n')}
+
+📞 Liên hệ ngay để được tư vấn và xem căn hộ thực tế!
+
+#${project.name.replace(/\s+/g, '')} #BatDongSan #${listingType === 'rent' ? 'ChoThue' : 'BanNha'}`
 }
 
 // Cập nhật seedDatabase function để pass userIds cho News

@@ -36,15 +36,66 @@ const propertySchema = new mongoose.Schema({
     enum: ['apartment', 'house', 'villa', 'townhouse', 'studio', 'penthouse', 'office', 'land'],
     required: true
   },
+  
+  // ✅ Thông tin chi tiết căn hộ/nhà
   details: {
-    area: { type: Number, min: 0 },
-    bedrooms: { type: Number, min: 0 },
+    bedrooms: {
+      type: String, // "2PN/2WC", "3PN/3WC", etc.
+      default: '1PN/1WC'
+    },
+    area: { 
+      type: Number, 
+      min: 0,
+      required: true 
+    },
     bathrooms: { type: Number, min: 0 },
     floors: { type: Number, min: 0 },
     parking: { type: Boolean, default: false },
     balcony: { type: Boolean, default: false },
-    direction: { type: String }
+    direction: { 
+      type: String,
+      enum: ['Đông', 'Tây', 'Nam', 'Bắc', 'Đông Nam', 'Đông Bắc', 'Tây Nam', 'Tây Bắc', '']
+    },
+    position: {
+      type: String, // "Block B", "Tòa A", etc.
+      default: ''
+    },
+    floor: {
+      type: Number, // tầng số
+      min: 1
+    }
   },
+
+  // ✅ Nội thất chi tiết
+  furniture: {
+    hasBasicFurniture: { type: Boolean, default: false },
+    hasKitchen: { type: Boolean, default: false }, 
+    hasAirConditioner: { type: Boolean, default: false },
+    hasWashingMachine: { type: Boolean, default: false },
+    hasRefrigerator: { type: Boolean, default: false },
+    hasTV: { type: Boolean, default: false },
+    hasBed: { type: Boolean, default: false },
+    hasDiningTable: { type: Boolean, default: false },
+    hasWifi: { type: Boolean, default: false },
+    hasMicrowave: { type: Boolean, default: false }
+  },
+
+  // ✅ Ưu điểm dự án
+  projectAdvantages: {
+    location: [String], // Vị trí địa lý, giao thông
+    facilities: [String], // Tiện ích nội khu  
+    amenities: [String] // Tiện ích kèm theo
+  },
+
+  // ✅ Thông tin dự án
+  project: {
+    name: { type: String, default: '' },
+    developer: { type: String, default: '' },
+    totalUnits: Number,
+    yearBuilt: Number,
+    handoverYear: Number
+  },
+
   images: [{
     type: String
   }],
@@ -66,6 +117,14 @@ const propertySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
+  
+  // ✅ Thông tin liên hệ
+  contactInfo: {
+    name: { type: String, default: '' },
+    phone: { type: String, default: '' },
+    email: String
+  },
+
   isFeatured: {
     type: Boolean,
     default: false
@@ -99,6 +158,14 @@ const propertySchema = new mongoose.Schema({
   timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
+})
+
+// ✅ Virtual for formatted price
+propertySchema.virtual('formattedPrice').get(function() {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND'
+  }).format(this.price)
 })
 
 // Indexes for better performance
